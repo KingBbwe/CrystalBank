@@ -1,0 +1,2 @@
+npm install @dfinity/agent @dfinity/identity @dfinity/candid
+npm install react react-dom
