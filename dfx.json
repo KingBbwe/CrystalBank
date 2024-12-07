@@ -1,0 +1,30 @@
+{
+  "canisters": {
+    "CrystalBank": {
+      "main": "backend/main.mo",
+      "type": "motoko",
+      "candid": "backend/CrystalBank.did"
+    },
+    "frontend": {
+      "main": "frontend/dist",
+      "type": "assets"
+    }
+  },
+  "networks": {
+    "local": {
+      "bind": "127.0.0.1:8000",
+      "type": "ephemeral"
+    },
+    "ic": {
+      "providers": ["https://ic0.app"],
+      "type": "persistent"
+    }
+  },
+  "defaults": {
+    "build": {
+      "output": "dist"
+    },
+    "network": "local"
+  },
+  "version": 1
+}
