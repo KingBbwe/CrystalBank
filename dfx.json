@@ -1,12 +1,12 @@
 {
   "canisters": {
     "CrystalBank": {
-      "main": "backend/main.mo",
+      "main": "src/backend/CrystalBank.mo",
       "type": "motoko",
-      "candid": "backend/CrystalBank.did"
+      "candid": "src/backend/CrystalBank.did"
     },
     "frontend": {
-      "main": "frontend/dist",
+      "main": "build",
       "type": "assets"
     }
   },
@@ -22,7 +22,7 @@
   },
   "defaults": {
     "build": {
-      "output": "dist"
+      "output": "build"
     },
     "network": "local"
   },
