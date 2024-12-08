@@ -3,9 +3,13 @@ name = "CrystalBank"
 version = "1.0.0"
 description = "A Motoko-based decentralized banking platform for The Chronicles of Auld Ewe TTRPG."
 license = "MIT"
+authors = ["Your Name <your.email@example.com>"]
 
 [dependencies]
-base = "0.1.1"             # Provides standard collection types and utilities.
-mo-crypto = "0.1.0"         # For cryptographic functions, if needed.
-mo-utils = "0.1.2"          # General utility functions for Motoko.
-mo-validation = "0.1.0"     # Validation and error-handling utilities.
+base = { version = "0.1.1", source = "mo:base" }         # Provides standard collection types and utilities.
+mo-crypto = { version = "0.1.0", source = "mo:crypto" }  # Cryptographic utilities for Motoko.
+mo-utils = { version = "0.1.2", source = "mo:utils" }    # General utility functions for Motoko.
+mo-validation = { version = "0.1.0", source = "mo:validation" }  # Input validation utilities.
+
+[build]
+target = "wasm32-unknown-unknown" # Target for compiling the project.
