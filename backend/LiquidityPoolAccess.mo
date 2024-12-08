@@ -1,7 +1,7 @@
 actor LiquidityPoolAccess {
-    stable var poolBalance: Nat = 1000000; // Example starting balance for the liquidity pool
+    stable var poolBalance: Nat = 1_000_000; // Example starting balance for the liquidity pool
 
-    public func acquireFUDDYFromPool(playerId: Text, amount: Nat): async Result<Text, Text> {
+    public shared func acquireFUDDYFromPool(playerId: Text, amount: Nat): async Result<Text, Text> {
         if (amount > poolBalance) {
             return #err("Insufficient pool balance");
         };
@@ -9,8 +9,7 @@ actor LiquidityPoolAccess {
         return #ok("Acquisition successful");
     };
 
-    public func getPoolBalance(): async Nat {
+    public shared func getPoolBalance(): async Nat {
         return poolBalance;
     };
 };
-
