@@ -1,4 +1,4 @@
-import HashSet "mo:base/HashSet";
+// import HashSet "mo:base/HashSet";
 
 actor PlayerRegistration {
     type PlayerID = Text;
@@ -18,7 +18,7 @@ actor PlayerRegistration {
     };
 
     public shared func removePlayer(playerId: PlayerID): async Bool {
-        if (!registeredPlayers.contains(playerId)) {
+        if (not registeredPlayers.contains(playerId)) {
             return false; // Player not found
         };
         registeredPlayers.remove(playerId);

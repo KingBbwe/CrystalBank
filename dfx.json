@@ -1,13 +1,18 @@
 {
   "canisters": {
     "CrystalBank": {
-      "main": "src/backend/CrystalBank.mo",
-      "type": "motoko",
-      "candid": "src/backend/CrystalBank.did"
+      "main": "backend/PlayerRegistration.mo",
+      "type": "motoko"
     },
     "frontend": {
-      "main": "build",
-      "type": "assets"
+      "dependencies": [
+        "CrystalBank"
+      ],
+      "source": [
+        "frontend/dist"
+      ],
+      "type": "assets",
+      "workspace": "frontend"
     }
   },
   "networks": {
@@ -16,13 +21,16 @@
       "type": "ephemeral"
     },
     "ic": {
-      "providers": ["https://ic0.app"],
+      "providers": [
+        "https://ic0.app"
+      ],
       "type": "persistent"
     }
   },
   "defaults": {
     "build": {
-      "output": "build"
+      "output": "build",
+      "packtool": "mops sources"
     },
     "network": "local"
   },
