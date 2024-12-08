@@ -1,1 +1,35 @@
+{
+  "name": "crystal-bank",
+  "version": "1.0.0",
+  "description": "A decentralized banking system for The Chronicles of Auld Ewe TTRPG, built on the Internet Computer.",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "vite",                // Starts the development server
+    "build": "vite build",          // Builds the React application
+    "serve": "vite preview",        // Previews the built app
+    "test": "jest"                  // Runs tests (if any)
+  },
+  "dependencies": {
+    "@dfinity/agent": "^0.14.0",    // For interacting with the Internet Computer
+    "@dfinity/identity": "^0.14.0", // Identity management for Web3
+    "@dfinity/candid": "^0.14.0",   // For defining and interacting with Candid interfaces
+    "react": "^18.2.0",             // React library
+    "react-dom": "^18.2.0",         // React DOM library
+    "axios": "^1.4.0"               // For API calls (optional, if used in your project)
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.0.0", // Vite plugin for React
+    "vite": "^4.0.0",                 // Vite build tool for fast development
+    "jest": "^29.0.0",                // Testing framework
+    "eslint": "^8.0.0",               // Linter for consistent coding style
+    "prettier": "^3.0.0"              // Formatter for clean code
+  },
+  "browserslist": [
+    "last 2 versions",
+    "> 0.5%",
+    "not dead"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
 
