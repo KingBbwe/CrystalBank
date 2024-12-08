@@ -1,0 +1,11 @@
+[package]
+name = "CrystalBank"
+version = "1.0.0"
+description = "A Motoko-based decentralized banking platform for The Chronicles of Auld Ewe TTRPG."
+license = "MIT"
+
+[dependencies]
+base = "0.1.1"             # Provides standard collection types and utilities.
+mo-crypto = "0.1.0"         # For cryptographic functions, if needed.
+mo-utils = "0.1.2"          # General utility functions for Motoko.
+mo-validation = "0.1.0"     # Validation and error-handling utilities.
