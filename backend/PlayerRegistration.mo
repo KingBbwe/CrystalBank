@@ -1,29 +1,31 @@
+import HashSet "mo:base/HashSet";
+
 actor PlayerRegistration {
     type PlayerID = Text;
-    stable var registeredPlayers: Set<PlayerID> = Set.empty();
 
-    public func registerPlayer(playerId: PlayerID): async Bool {
-        if (Set.contains(registeredPlayers, playerId)) {
+    stable var registeredPlayers: HashSet.HashSet<PlayerID> = HashSet.HashSet();
+
+    public shared func registerPlayer(playerId: PlayerID): async Bool {
+        if (registeredPlayers.contains(playerId)) {
             return false; // Player already registered
         };
-        registeredPlayers := Set.insert(registeredPlayers, playerId);
+        registeredPlayers.put(playerId);
         return true;
     };
 
-    public func isRegistered(playerId: PlayerID): async Bool {
-        return Set.contains(registeredPlayers, playerId);
+    public shared func isRegistered(playerId: PlayerID): async Bool {
+        return registeredPlayers.contains(playerId);
     };
 
-    public func removePlayer(playerId: PlayerID): async Bool {
-        if (!Set.contains(registeredPlayers, playerId)) {
+    public shared func removePlayer(playerId: PlayerID): async Bool {
+        if (!registeredPlayers.contains(playerId)) {
             return false; // Player not found
         };
-        registeredPlayers := Set.remove(registeredPlayers, playerId);
+        registeredPlayers.remove(playerId);
         return true;
     };
 
-    public func getRegisteredPlayers(): async [PlayerID] {
-        return Set.toArray(registeredPlayers);
+    public shared func getRegisteredPlayers(): async [PlayerID] {
+        return registeredPlayers.toArray();
     };
 };
-
