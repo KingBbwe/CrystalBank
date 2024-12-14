@@ -1,4 +1,5 @@
 import Array "mo:base/Array";
+import Time "mo:base/Time";
 
 actor TransactionHistory {
     type TransactionRecord = { action: Text; amount: Nat; timestamp: Int; playerId: Text };

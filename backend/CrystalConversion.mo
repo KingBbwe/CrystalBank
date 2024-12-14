@@ -13,7 +13,7 @@ actor CrystalConversion {
             case ("Type2") { conversionRates.Type2 := newRate };
             case ("Type3") { conversionRates.Type3 := newRate };
             case ("Type4") { conversionRates.Type4 := newRate };
-            else return false;
+            // else return false;
         };
         return true;
     };
@@ -29,7 +29,7 @@ actor CrystalConversion {
             case ("Type2") { currentDeposits.Type2 += amount };
             case ("Type3") { currentDeposits.Type3 += amount };
             case ("Type4") { currentDeposits.Type4 += amount };
-            else return #err("Invalid crystal type");
+            // else return #err("Invalid crystal type");
         };
         depositRecords.put(playerId, currentDeposits);
         return #ok("Deposit successful");

@@ -46,7 +46,7 @@ actor MacroManager {
 
         conversionRate := adjustedRate;
         return adjustedRate;
-    }
+    };
 
     // Log and update player economic activity
     public func updatePlayerEconomicProfile(
@@ -79,7 +79,7 @@ actor MacroManager {
             };
         };
         #ok("Profile Updated")
-    }
+    };
 
     // Simple behavior scoring mechanism
     private func calculateBehaviorScore(
@@ -95,7 +95,7 @@ actor MacroManager {
             case (_) { 1.0 };
         };
         return baseScore * scoreFactor;
-    }
+    };
 
     // Retrieve comprehensive economic snapshot
     public query func getEconomicSnapshot() : async {
@@ -108,12 +108,12 @@ actor MacroManager {
             totalFUDDY = totalFUDDY;
             currentConversionRate = conversionRate;
         }
-    }
+    };
 
     // System upgrade hook to persist data
     system func preupgrade() {
         playerProfiles := Iter.toArray(playerProfilesMap.entries());
-    }
+    };
 
     system func postupgrade() {
         playerProfilesMap := HashMap.fromIter<Text, PlayerEconomicProfile>(

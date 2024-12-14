@@ -3,7 +3,7 @@ import HashMap "mo:base/HashMap";
 actor MarketInteraction {
     type PlayerID = Text;
 
-    stable var balances: HashMap.HashMap<PlayerID, Nat] = HashMap.HashMap();
+    stable var balances: HashMap.HashMap<PlayerID, Nat> = HashMap.HashMap();
 
     public shared func buyFUDDY(playerId: PlayerID, amount: Nat): async Result<Text, Text> {
         if (amount <= 0) {

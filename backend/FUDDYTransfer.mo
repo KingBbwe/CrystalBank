@@ -3,7 +3,7 @@ import HashMap "mo:base/HashMap";
 actor FUDDYTransfer {
     type PlayerID = Text;
 
-    stable var balances: HashMap.HashMap<PlayerID, Nat] = HashMap.HashMap();
+    stable var balances: HashMap.HashMap<PlayerID, Nat> = HashMap.HashMap();
     stable var centralAccountBalance: Nat = 1_000_000; // Initial reserve for central operations
 
     public shared func depositToAccount(playerId: PlayerID, amount: Nat): async Result<Text, Text> {
@@ -39,7 +39,7 @@ actor FUDDYTransfer {
         return balances.get(playerId).unwrapOr(0);
     };
 
-    public shared func centralAccountBalance(): async Nat {
+    public shared func getCentralAccountBalance(): async Nat {
         return centralAccountBalance;
     };
 };
