@@ -13,6 +13,8 @@ function PlayerDashboard() {
     const [history, setHistory] = useState([]);
     const [walletBalances, setWalletBalances] = useState({ inGameFuddy: 0, realFuddy: 0 }); // Hybrid Wallet Balances
     const [depositAmount, setDepositAmount] = useState(0); // Amount for real $FUDDY deposit
+    const [transferTarget, setTransferTarget] = useState(''); // Target player ID for transfer
+    const [transferAmount, setTransferAmount] = useState(0); // Amount to transfer real $FUDDY
 
     // Fetch wallet balances when playerId changes
     useEffect(() => {
@@ -37,6 +39,11 @@ function PlayerDashboard() {
 
     // Convert Crystals to $FUDDY
     const handleConvertToFUDDY = async () => {
+        if (walletBalances.realFuddy < amount) {
+            alert("Conversion limited by real $FUDDY balance. Please increase your real $FUDDY backing.");
+            return;
+        }
+
         const result = await convertCrystalsToFUDDY(playerId);
         alert(result ? `Conversion successful: ${result} $FUDDY` : 'Conversion failed');
     };
@@ -65,13 +72,37 @@ function PlayerDashboard() {
         }
     };
 
+    // Transfer Real $FUDDY
+    const handleTransferFuddy = async () => {
+        try {
+            const result = await hybridWallet.transferRealFuddy(playerId, transferTarget, transferAmount);
+            if (result.ok) {
+                alert("Transfer successful!");
+                setTransferTarget('');
+                setTransferAmount(0);
+                // Refresh balances after transfer
+                const balances = await hybridWallet.getBalances(playerId);
+                setWalletBalances(balances);
+            } else {
+                alert(`Transfer failed: ${result.err}`);
+            }
+        } catch (error) {
+            alert("Error during transfer: " + error.message);
+        }
+    };
+
     return (
         <div>
             <h1>Player Dashboard</h1>
             <div>
                 <label>
                     Player ID:
-                    <input type="text" placeholder="Player ID" value={playerId} onChange={(e) => setPlayerId(e.target.value)} />
+                    <input
+                        type="text"
+                        placeholder="Player ID"
+                        value={playerId}
+                        onChange={(e) => setPlayerId(e.target.value)}
+                    />
                 </label>
             </div>
             <div>
@@ -90,13 +121,23 @@ function PlayerDashboard() {
                 <button onClick={handleDepositRealFuddy}>Deposit Real $FUDDY</button>
             </div>
             <div>
-                <h2>Deposit Crystals</h2>
+                <h2>Transfer Real $FUDDY</h2>
                 <input
                     type="text"
-                    placeholder="Player ID"
-                    value={playerId}
-                    onChange={(e) => setPlayerId(e.target.value)}
+                    placeholder="Target Player ID"
+                    value={transferTarget}
+                    onChange={(e) => setTransferTarget(e.target.value)}
                 />
+                <input
+                    type="number"
+                    placeholder="Amount to transfer"
+                    value={transferAmount}
+                    onChange={(e) => setTransferAmount(Number(e.target.value))}
+                />
+                <button onClick={handleTransferFuddy}>Transfer</button>
+            </div>
+            <div>
+                <h2>Deposit Crystals</h2>
                 <select onChange={(e) => setCrystalType(e.target.value)}>
                     <option value="">Select Crystal Type</option>
                     <option value="Type1">Type 1</option>
