@@ -258,22 +258,23 @@ actor CrystalBank {
 
     // Economic Management Methods
     public func updateConversionRate(crystalType: Text, newRate: Nat): async Bool {
-        switch (crystalType) {
-            case ("Type1") { conversionRates := { conversionRates with Type1 = newRate }; };
-            case ("Type2") { conversionRates := { conversionRates with Type2 = newRate }; };
-            case ("Type3") { conversionRates := { conversionRates with Type3 = newRate }; };
-            case ("Type4") { conversionRates := { conversionRates with Type4 = newRate }; };
-            case (_) { return false; };
+    switch (crystalType) {
+        case ("Type1") {
+            conversionRates := { Type1 = newRate; Type2 = conversionRates.Type2; Type3 = conversionRates.Type3; Type4 = conversionRates.Type4 };
         };
-        return true;
-    };
+        case ("Type2") {
+            conversionRates := { Type1 = conversionRates.Type1; Type2 = newRate; Type3 = conversionRates.Type3; Type4 = conversionRates.Type4 };
+        };
+        case ("Type3") {
+            conversionRates := { Type1 = conversionRates.Type1; Type2 = conversionRates.Type2; Type3 = newRate; Type4 = conversionRates.Type4 };
+        };
+        case ("Type4") {
+            conversionRates := { Type1 = conversionRates.Type1; Type2 = conversionRates.Type2; Type3 = conversionRates.Type3; Type4 = newRate };
+        };
+        case (_) {
+            return false;
+        };
+    }
+    return true;
+};
 
-    public query func getCurrentConversionRates(): async {
-        Type1: Nat;
-        Type2: Nat;
-        Type3: Nat;
-        Type4: Nat;
-    } {
-        conversionRates;
-    };
-}
