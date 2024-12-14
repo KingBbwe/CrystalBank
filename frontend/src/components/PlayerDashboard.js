@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import {
-    depositCrystals,
-    convertCrystalsToFUDDY,
-    getTransactionHistory,
-} from '../api/crystalBank';
-import { hybridWallet } from '../api/hybridWallet'; // Import the HybridWallet API
+import { getTransactionHistory } from '../api/crystalBank'; // Existing API for transaction history
+import { handleDepositCrystals, handleConvertToFUDDY } from '../api/fuddy'; // Modular functions
+import { hybridWallet } from '../api/hybridWallet'; // HybridWallet API for wallet interactions
 
 function PlayerDashboard() {
     const [playerId, setPlayerId] = useState('');
@@ -31,21 +28,16 @@ function PlayerDashboard() {
         }
     }, [playerId]);
 
-    // Deposit Crystals Functionality
-    const handleDepositCrystals = async () => {
-        const result = await depositCrystals(playerId, crystalType, amount);
-        alert(result ? 'Crystals deposited successfully' : 'Deposit failed');
+    // Handle crystal deposits using the modularized function
+    const handleDepositCrystalsAction = async () => {
+        const result = await handleDepositCrystals(playerId, crystalType, amount);
+        alert(result);
     };
 
-    // Convert Crystals to $FUDDY
-    const handleConvertToFUDDY = async () => {
-        if (walletBalances.realFuddy < amount) {
-            alert("Conversion limited by real $FUDDY balance. Please increase your real $FUDDY backing.");
-            return;
-        }
-
-        const result = await convertCrystalsToFUDDY(playerId);
-        alert(result ? `Conversion successful: ${result} $FUDDY` : 'Conversion failed');
+    // Handle FUDDY conversion with redundancy mechanism using the modularized function
+    const handleConvertToFUDDYAction = async () => {
+        const result = await handleConvertToFUDDY(playerId, amount, walletBalances.realFuddy);
+        alert(result);
     };
 
     // Fetch Transaction History
@@ -149,11 +141,11 @@ function PlayerDashboard() {
                     value={amount}
                     onChange={(e) => setAmount(Number(e.target.value))}
                 />
-                <button onClick={handleDepositCrystals}>Deposit</button>
+                <button onClick={handleDepositCrystalsAction}>Deposit</button>
             </div>
             <div>
                 <h2>Convert to $FUDDY</h2>
-                <button onClick={handleConvertToFUDDY}>Convert</button>
+                <button onClick={handleConvertToFUDDYAction}>Convert</button>
             </div>
             <div>
                 <h2>Transaction History</h2>
