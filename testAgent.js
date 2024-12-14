@@ -5,3 +5,6 @@ const agent = new HttpAgent({ host: 'http://localhost:8000' });
 
 // Log the agent object to confirm it works
 console.log('Agent created:', agent);
+const { TextEncoder, TextDecoder } = require('util');
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder;
