@@ -33,7 +33,7 @@ actor CrystalBank {
         switch (playerRegistry.get(playerId)) {
             case (null) { false };
             case (_) { true };
-        };
+        }
     };
 
     public func removePlayer(playerId: PlayerID): async Bool {
@@ -45,8 +45,8 @@ actor CrystalBank {
                 depositRecords.delete(playerId);
                 balances.delete(playerId);
                 return true;
-            };
-        };
+            }
+        }
     };
 
     // Crystal Deposit and Conversion Methods
@@ -54,12 +54,12 @@ actor CrystalBank {
         // Validate player registration
         if (playerRegistry.get(playerId) == null) {
             return #err("Player not registered");
-        };
+        }
 
         // Validate amount
         if (amount <= 0) {
             return #err("Amount must be positive");
-        };
+        }
 
         // Get current deposits or initialize
         let currentDeposits = switch (depositRecords.get(playerId)) {
@@ -81,6 +81,7 @@ actor CrystalBank {
 
         // Log transaction
         _logTransaction(playerId, "Crystal Deposit: " # crystalType, amount);
+        
         return #ok("Deposit successful");
     };
 
@@ -88,7 +89,7 @@ actor CrystalBank {
         // Validate player registration
         if (playerRegistry.get(playerId) == null) {
             return #err("Player not registered");
-        };
+        }
 
         // Get current deposits
         let deposits = switch (depositRecords.get(playerId)) {
@@ -108,7 +109,7 @@ actor CrystalBank {
             case (null) { 0 };
             case (?balance) { balance };
         };
-        
+
         balances.put(playerId, currentBalance + totalFUDDY);
 
         // Clear deposits after conversion
@@ -116,7 +117,7 @@ actor CrystalBank {
 
         // Log transaction
         _logTransaction(playerId, "Crystal to FUDDY Conversion", totalFUDDY);
-        
+
         return #ok(totalFUDDY);
     };
 
@@ -125,7 +126,7 @@ actor CrystalBank {
         // Validate players
         if (playerRegistry.get(fromPlayerId) == null or playerRegistry.get(toPlayerId) == null) {
             return #err("One or both players not registered");
-        };
+        }
 
         // Get sender's balance
         let senderBalance = switch (balances.get(fromPlayerId)) {
@@ -136,7 +137,7 @@ actor CrystalBank {
         // Check sufficient funds
         if (amount > senderBalance) {
             return #err("Insufficient funds");
-        };
+        }
 
         // Get receiver's balance
         let receiverBalance = switch (balances.get(toPlayerId)) {
@@ -150,7 +151,7 @@ actor CrystalBank {
 
         // Log transaction
         _logTransaction(fromPlayerId, "FUDDY Transfer to " # toPlayerId, amount);
-        
+
         return #ok("Transfer successful");
     };
 
@@ -166,24 +167,24 @@ actor CrystalBank {
        // Validate player
        if (playerRegistry.get(playerId) == null) {
            return #err("Player not registered");
-       };
+       }
 
        // Validate amount
        if (amount <= 0) {
            return #err("Amount must be positive");
-       };
+       }
 
        // Update player balance
        let currentBalance = switch (balances.get(playerId)) {
            case (null) { 0 };
            case (?balance) { balance };
        };
-       
+
        balances.put(playerId, currentBalance + amount);
 
        // Log transaction
        _logTransaction(playerId, "FUDDY Purchase", amount);
-       
+
        return #ok("Purchase successful");
    };
 
@@ -195,7 +196,7 @@ actor CrystalBank {
              timestamp = Time.now();
              playerId = playerId;
            };
-       
+
        transactionHistory := Array.append(transactionHistory, [record]);
    };
 
@@ -214,16 +215,16 @@ actor CrystalBank {
        switch (crystalType) {
            case ("Type1") {
                conversionRates := { Type1=newRate; Type2=conversionRates.Type2; Type3=conversionRates.Type3; Type4=conversionRates.Type4 };
-           };
+           }
            case ("Type2") {
                conversionRates := { Type1=conversionRates.Type1; Type2=newRate; Type3=conversionRates.Type3; Type4=conversionRates.Type4 };
-           };
+           }
            case ("Type3") {
                conversionRates := { Type1=conversionRates.Type1; Type2=conversionRates.Type2; Type3=newRate; Type4=conversionRates.Type4 };
-           };
+           }
            case ("Type4") {
                conversionRates := { Type1=conversionRates.Type1; Type2=conversionRates.Type2; Type3=conversionRates.Type3; Type4=newRate };
-           };
+           }
            case (_) {
                return false;
            }
