@@ -70,68 +70,73 @@ actor CrystalBank {
 
     // Crystal Deposit and Conversion Methods
     public func depositCrystals(playerId: PlayerID, crystalType: Text, amount: Nat): async Result.Result<Text, Text> {
-        // Validate player registration
-        switch (playerRegistry.get(playerId)) {
-            case (null) { return #err("Player not registered") };
-            case (_) {
-                // Validate amount
-                if (amount <= 0) {
-                    return #err("Amount must be positive");
-                }
+    switch (playerRegistry.get(playerId)) {
+        case (null) { 
+            return #err("Player not registered") 
+        };
+        case (_) {
+            // Validate amount
+            if (amount <= 0) {
+                return #err("Amount must be positive");
+            }
 
-                // Get current deposits or initialize
-                let currentDeposits = switch (depositRecords.get(playerId)) {
-                    case (null) { { Type1 = 0; Type2 = 0; Type3 = 0; Type4 = 0 } };
-                    case (?deposits) { deposits };
+            // Get current deposits or initialize
+            let currentDeposits = switch (depositRecords.get(playerId)) {
+                case (null) { 
+                    { Type1 = 0; Type2 = 0; Type3 = 0; Type4 = 0 } 
                 };
-
-                // Update deposits based on crystal type
-                let updatedDeposits = switch (crystalType) {
-                    case ("Type1") { 
-                        { 
-                            Type1 = currentDeposits.Type1 + amount; 
-                            Type2 = currentDeposits.Type2; 
-                            Type3 = currentDeposits.Type3; 
-                            Type4 = currentDeposits.Type4 
-                        } 
-                    };
-                    case ("Type2") { 
-                        { 
-                            Type1 = currentDeposits.Type1; 
-                            Type2 = currentDeposits.Type2 + amount; 
-                            Type3 = currentDeposits.Type3; 
-                            Type4 = currentDeposits.Type4 
-                        } 
-                    };
-                    case ("Type3") { 
-                        { 
-                            Type1 = currentDeposits.Type1; 
-                            Type2 = currentDeposits.Type2; 
-                            Type3 = currentDeposits.Type3 + amount; 
-                            Type4 = currentDeposits.Type4 
-                        } 
-                    };
-                    case ("Type4") { 
-                        { 
-                            Type1 = currentDeposits.Type1; 
-                            Type2 = currentDeposits.Type2; 
-                            Type3 = currentDeposits.Type3; 
-                            Type4 = currentDeposits.Type4 + amount 
-                        } 
-                    };
-                    case (_) { return #err("Invalid crystal type") };
-                };
-
-                // Update deposit records
-                depositRecords.put(playerId, updatedDeposits);
-
-                // Log transaction
-                _logTransaction(playerId, "Crystal Deposit: " # crystalType, amount);
-
-                return #ok("Deposit successful");
+                case (?deposits) { deposits };
             };
+
+            // Update deposits based on crystal type
+            let updatedDeposits = switch (crystalType) {
+                case ("Type1") { 
+                    { 
+                        Type1 = currentDeposits.Type1 + amount; 
+                        Type2 = currentDeposits.Type2; 
+                        Type3 = currentDeposits.Type3; 
+                        Type4 = currentDeposits.Type4 
+                    } 
+                };
+                case ("Type2") { 
+                    { 
+                        Type1 = currentDeposits.Type1; 
+                        Type2 = currentDeposits.Type2 + amount; 
+                        Type3 = currentDeposits.Type3; 
+                        Type4 = currentDeposits.Type4 
+                    } 
+                };
+                case ("Type3") { 
+                    { 
+                        Type1 = currentDeposits.Type1; 
+                        Type2 = currentDeposits.Type2; 
+                        Type3 = currentDeposits.Type3 + amount; 
+                        Type4 = currentDeposits.Type4 
+                    } 
+                };
+                case ("Type4") { 
+                    { 
+                        Type1 = currentDeposits.Type1; 
+                        Type2 = currentDeposits.Type2; 
+                        Type3 = currentDeposits.Type3; 
+                        Type4 = currentDeposits.Type4 + amount 
+                    } 
+                };
+                case (_) { 
+                    return #err("Invalid crystal type") 
+                };
+            };
+
+            // Update deposit records
+            depositRecords.put(playerId, updatedDeposits);
+
+            // Log transaction
+            _logTransaction(playerId, "Crystal Deposit: " # crystalType, amount);
+
+            return #ok("Deposit successful");
         }
     }
+}
 
     public func convertCrystalsToFUDDY(playerId: PlayerID): async Result.Result<Nat, Text> {
         // Validate player registration
