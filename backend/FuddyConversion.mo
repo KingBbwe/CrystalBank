@@ -13,7 +13,7 @@ actor FuddyConversion {
     stable var fuddyBalances: HashMap.HashMap<PlayerID, FuddyBalance> = HashMap.HashMap();
 
     // Reference to the external blockchain wallet
-    let blockchainWallet = BlockchainWallet(Principal.fromText("<INSERT_CANISTER_ID>"));
+    let blockchainWallet = BlockchainWallet(Principal.fromText("<oeogn-qaaaa-aaaam-acoyq-cai>"));
 
     public shared func convertToBlockchain(playerId: PlayerID, amount: Nat): async Result<Text, Text> {
         let currentBalance = fuddyBalances.get(playerId).unwrapOr(0);
