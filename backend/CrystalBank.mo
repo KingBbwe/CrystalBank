@@ -48,7 +48,7 @@ actor CrystalBank {
         };
 
         transactionHistory := Array.append(transactionHistory, [record]);
-    }
+    };
 
     // Player Registration Methods
     public func registerPlayer(playerId : PlayerID) : async Bool {
@@ -59,14 +59,14 @@ actor CrystalBank {
                 true 
             };
         }
-    }
+    };
 
     public func isPlayerRegistered(playerId : PlayerID) : async Bool {
         switch (playerRegistry.get(playerId)) {
             case (null) { false };
             case (_) { true };
         }
-    }
+    };
 
     public func removePlayer(playerId : PlayerID) : async Bool {
         switch (playerRegistry.get(playerId)) {
@@ -78,7 +78,7 @@ actor CrystalBank {
                 true
             };
         }
-    }
+    };
 
     // Crystal Deposit Method
     public func depositCrystals(playerId : PlayerID, crystalType : Text, amount : Nat) : async Result.Result<Text, Text> {
@@ -91,7 +91,7 @@ actor CrystalBank {
                 // Amount validation
                 if (amount <= 0) {
                     return #err("Amount must be positive");
-                }
+                };
 
                 // Get or initialize deposits
                 let currentDeposits = switch (depositRecords.get(playerId)) {
@@ -149,7 +149,7 @@ actor CrystalBank {
                 return #ok("Deposit successful");
             }
         }
-    }
+    };
 
     // Convert Crystals to FUDDY
     public func convertCrystalsToFUDDY(playerId : PlayerID) : async Result.Result<Nat, Text> {
@@ -191,7 +191,7 @@ actor CrystalBank {
                 return #ok(totalFUDDY);
             }
         }
-    }
+    };
 
     // FUDDY Transfer Method
     public func transferFUDDY(fromPlayerId : PlayerID, toPlayerId : PlayerID, amount : Nat) : async Result.Result<Text, Text> {
@@ -213,7 +213,7 @@ actor CrystalBank {
                 // Check sufficient funds
                 if (amount > senderBalance) {
                     return #err("Insufficient funds");
-                }
+                };
 
                 // Get receiver's balance
                 let receiverBalance = switch (balances.get(toPlayerId)) {
@@ -231,7 +231,7 @@ actor CrystalBank {
                 return #ok("Transfer successful");
             };
         }
-    }
+    };
 
     // Get Player Balance
     public func getBalance(playerId : PlayerID) : async Nat {
@@ -239,7 +239,7 @@ actor CrystalBank {
             case (null) { 0 };
             case (?balance) { balance };
         }
-    }
+    };
 
     // Buy FUDDY Method
     public func buyFUDDY(playerId : PlayerID, amount : Nat) : async Result.Result<Text, Text> {
@@ -252,7 +252,7 @@ actor CrystalBank {
                 // Validate amount
                 if (amount <= 0) {
                     return #err("Amount must be positive");
-                }
+                };
 
                 // Update player balance
                 let currentBalance = switch (balances.get(playerId)) {
@@ -268,18 +268,18 @@ actor CrystalBank {
                 return #ok("Purchase successful");
             }
         }
-    }
+    };
 
     // Transaction History Methods
     public func getTransactionHistory() : async [TransactionRecord] {
         transactionHistory
-    }
+    };
 
     public func getPlayerTransactions(playerId : PlayerID) : async [TransactionRecord] {
         Array.filter(transactionHistory, func(record : TransactionRecord) : Bool {
             record.playerId == playerId
         })
-    }
+    };
 
     // Economic Management Methods
     public func updateConversionRate(crystalType : Text, newRate : Nat) : async Bool {
@@ -319,10 +319,10 @@ actor CrystalBank {
             case (_) { return false };
         };
         return true;
-    }
+    };
 
     // Get Current Conversion Rates
     public query func getCurrentConversionRates() : async ?{Type1 : Nat; Type2 : Nat; Type3 : Nat; Type4 : Nat} {
         ?conversionRates
-    }
+    };
 }
