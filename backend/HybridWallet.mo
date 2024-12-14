@@ -1,12 +1,13 @@
 import HashMap "mo:base/HashMap";
 
-// Define wallet structure
-type WalletBalance = { inGameFuddy: Nat; realFuddy: Nat };
-
 actor HybridWallet {
     type PlayerID = Text;
 
-    // Stable storage for wallet balances
+    type WalletBalance = {
+        inGameFuddy: Nat;
+        realFuddy: Nat;
+    };
+
     stable var playerWallets: HashMap.HashMap<PlayerID, WalletBalance> = HashMap.HashMap();
 
     // Deposit real $FUDDY into the wallet
@@ -15,27 +16,51 @@ actor HybridWallet {
         currentWallet.realFuddy += amount;
         playerWallets.put(playerId, currentWallet);
         return #ok("Real $FUDDY deposited successfully");
-    }
+    };
 
-    // Transfer $FUDDY to in-game FUDDY
-    public shared func transferToInGame(playerId: PlayerID, amount: Nat): async Result<Text, Text> {
-        let currentWallet = playerWallets.get(playerId).unwrapOr({ inGameFuddy = 0; realFuddy = 0 });
+    // Transfer real $FUDDY between accounts
+    public shared func transferRealFuddy(from: PlayerID, to: PlayerID, amount: Nat): async Result<Text, Text> {
+        let senderWallet = playerWallets.get(from).unwrapOr({ inGameFuddy = 0; realFuddy = 0 });
 
-        // Check if enough real $FUDDY exists
-        if (amount > currentWallet.realFuddy) {
+        // Check if sender has enough real $FUDDY
+        if (amount > senderWallet.realFuddy) {
             return #err("Insufficient real $FUDDY balance");
         };
 
+        let receiverWallet = playerWallets.get(to).unwrapOr({ inGameFuddy = 0; realFuddy = 0 });
+
         // Update balances
-        currentWallet.realFuddy -= amount;
-        currentWallet.inGameFuddy += amount;
+        senderWallet.realFuddy -= amount;
+        receiverWallet.realFuddy += amount;
+
+        playerWallets.put(from, senderWallet);
+        playerWallets.put(to, receiverWallet);
+
+        return #ok("Transfer successful");
+    };
+
+    // Ensure in-game FUDDY spending is backed by real $FUDDY
+    public shared func spendInGameFuddy(playerId: PlayerID, amount: Nat): async Result<Text, Text> {
+        let currentWallet = playerWallets.get(playerId).unwrapOr({ inGameFuddy = 0; realFuddy = 0 });
+
+        // Check if in-game spending is backed by real $FUDDY
+        if (amount > currentWallet.realFuddy) {
+            return #err("Insufficient real $FUDDY backing for in-game spending");
+        };
+
+        if (amount > currentWallet.inGameFuddy) {
+            return #err("Insufficient in-game FUDDY balance");
+        };
+
+        // Deduct in-game FUDDY
+        currentWallet.inGameFuddy -= amount;
         playerWallets.put(playerId, currentWallet);
 
-        return #ok("Transferred to in-game FUDDY successfully");
-    }
+        return #ok("In-game FUDDY spent successfully");
+    };
 
-    // Get current wallet balances
+    // Fetch wallet balances for frontend use
     public shared func getBalances(playerId: PlayerID): async WalletBalance {
         return playerWallets.get(playerId).unwrapOr({ inGameFuddy = 0; realFuddy = 0 });
-    }
+    };
 }
