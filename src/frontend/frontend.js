@@ -5,7 +5,7 @@ import { Actor, HttpAgent } from '@dfinity/agent';
 import { idlFactory as crystalBankIdl } from './declarations/CrystalBank'; // Adjust the path as necessary
 
 // Define the canister ID (replace with your actual canister ID)
-const crystalBankCanisterId = "rrkah-fqaaa-aaaaa-aaaaq-cai"; // Replace with your deployed canister ID
+const crystalBankCanisterId = "ryjl3-tyaaa-aaaaa-aaaba-cai"; // Replace with your deployed canister ID
 
 // Create an agent to communicate with the Internet Computer
 const agent = new HttpAgent();
