@@ -10,17 +10,17 @@ actor CrystalBank {
     type PlayerID = Text;
     
     type CrystalType = { 
-        Type1: Nat; 
-        Type2: Nat; 
-        Type3: Nat; 
-        Type4: Nat 
+        Type1 : Nat; 
+        Type2 : Nat; 
+        Type3 : Nat; 
+        Type4 : Nat 
     };
     
     type TransactionRecord = { 
-        action: Text; 
-        amount: Nat; 
-        timestamp: Int;
-        playerId: Text 
+        action : Text; 
+        amount : Nat; 
+        timestamp : Int;
+        playerId : Text 
     };
 
     // State variables
@@ -38,8 +38,20 @@ actor CrystalBank {
         Type4 = 20 
     };
 
+    // Private helper function to log transactions
+    private func _logTransaction(playerId : PlayerID, action : Text, amount : Nat) : () {
+        let record : TransactionRecord = {
+            action = action;
+            amount = amount;
+            timestamp = Time.now();
+            playerId = playerId;
+        };
+
+        transactionHistory := Array.append(transactionHistory, [record]);
+    }
+
     // Player Registration Methods
-    public func registerPlayer(playerId: PlayerID): async Bool {
+    public func registerPlayer(playerId : PlayerID) : async Bool {
         switch (playerRegistry.get(playerId)) {
             case (?_) { false }; // Player already registered
             case (null) { 
@@ -49,14 +61,14 @@ actor CrystalBank {
         }
     }
 
-    public func isPlayerRegistered(playerId: PlayerID): async Bool {
+    public func isPlayerRegistered(playerId : PlayerID) : async Bool {
         switch (playerRegistry.get(playerId)) {
             case (null) { false };
             case (_) { true };
         }
     }
 
-    public func removePlayer(playerId: PlayerID): async Bool {
+    public func removePlayer(playerId : PlayerID) : async Bool {
         switch (playerRegistry.get(playerId)) {
             case (null) { false };
             case (_) {
@@ -68,84 +80,90 @@ actor CrystalBank {
         }
     }
 
-    // Crystal Deposit and Conversion Methods
-    public func depositCrystals(playerId: PlayerID, crystalType: Text, amount: Nat): async Result.Result<Text, Text> {
-    switch (playerRegistry.get(playerId)) {
-        case (null) { 
-            return #err("Player not registered") 
-        };
-        case (_) {
-            // Validate amount
-            if (amount <= 0) {
-                return #err("Amount must be positive");
+    // Crystal Deposit Method
+    public func depositCrystals(playerId : PlayerID, crystalType : Text, amount : Nat) : async Result.Result<Text, Text> {
+        // Player registration check
+        switch (playerRegistry.get(playerId)) {
+            case (null) { 
+                return #err("Player not registered") 
+            };
+            case (_) {
+                // Amount validation
+                if (amount <= 0) {
+                    return #err("Amount must be positive");
+                }
+
+                // Get or initialize deposits
+                let currentDeposits = switch (depositRecords.get(playerId)) {
+                    case (null) { 
+                        { Type1 = 0; Type2 = 0; Type3 = 0; Type4 = 0 } 
+                    };
+                    case (?deposits) { deposits };
+                };
+
+                // Update deposits based on crystal type
+                let updatedDeposits = switch (crystalType) {
+                    case ("Type1") { 
+                        { 
+                            Type1 = currentDeposits.Type1 + amount; 
+                            Type2 = currentDeposits.Type2; 
+                            Type3 = currentDeposits.Type3; 
+                            Type4 = currentDeposits.Type4 
+                        } 
+                    };
+                    case ("Type2") { 
+                        { 
+                            Type1 = currentDeposits.Type1; 
+                            Type2 = currentDeposits.Type2 + amount; 
+                            Type3 = currentDeposits.Type3; 
+                            Type4 = currentDeposits.Type4 
+                        } 
+                    };
+                    case ("Type3") { 
+                        { 
+                            Type1 = currentDeposits.Type1; 
+                            Type2 = currentDeposits.Type2; 
+                            Type3 = currentDeposits.Type3 + amount; 
+                            Type4 = currentDeposits.Type4 
+                        } 
+                    };
+                    case ("Type4") { 
+                        { 
+                            Type1 = currentDeposits.Type1; 
+                            Type2 = currentDeposits.Type2; 
+                            Type3 = currentDeposits.Type3; 
+                            Type4 = currentDeposits.Type4 + amount 
+                        } 
+                    };
+                    case (_) { 
+                        return #err("Invalid crystal type") 
+                    };
+                };
+
+                // Update deposit records
+                depositRecords.put(playerId, updatedDeposits);
+
+                // Log transaction
+                _logTransaction(playerId, "Crystal Deposit: " # crystalType, amount);
+
+                return #ok("Deposit successful");
             }
-
-            // Get current deposits or initialize
-            let currentDeposits = switch (depositRecords.get(playerId)) {
-                case (null) { 
-                    { Type1 = 0; Type2 = 0; Type3 = 0; Type4 = 0 } 
-                };
-                case (?deposits) { deposits };
-            };
-
-            // Update deposits based on crystal type
-            let updatedDeposits = switch (crystalType) {
-                case ("Type1") { 
-                    { 
-                        Type1 = currentDeposits.Type1 + amount; 
-                        Type2 = currentDeposits.Type2; 
-                        Type3 = currentDeposits.Type3; 
-                        Type4 = currentDeposits.Type4 
-                    } 
-                };
-                case ("Type2") { 
-                    { 
-                        Type1 = currentDeposits.Type1; 
-                        Type2 = currentDeposits.Type2 + amount; 
-                        Type3 = currentDeposits.Type3; 
-                        Type4 = currentDeposits.Type4 
-                    } 
-                };
-                case ("Type3") { 
-                    { 
-                        Type1 = currentDeposits.Type1; 
-                        Type2 = currentDeposits.Type2; 
-                        Type3 = currentDeposits.Type3 + amount; 
-                        Type4 = currentDeposits.Type4 
-                    } 
-                };
-                case ("Type4") { 
-                    { 
-                        Type1 = currentDeposits.Type1; 
-                        Type2 = currentDeposits.Type2; 
-                        Type3 = currentDeposits.Type3; 
-                        Type4 = currentDeposits.Type4 + amount 
-                    } 
-                };
-                case (_) { 
-                    return #err("Invalid crystal type") 
-                };
-            };
-
-            // Update deposit records
-            depositRecords.put(playerId, updatedDeposits);
-
-            // Log transaction
-            _logTransaction(playerId, "Crystal Deposit: " # crystalType, amount);
-
-            return #ok("Deposit successful");
         }
     }
-}
 
-    public func convertCrystalsToFUDDY(playerId: PlayerID): async Result.Result<Nat, Text> {
-        // Validate player registration
+    // Convert Crystals to FUDDY
+    public func convertCrystalsToFUDDY(playerId : PlayerID) : async Result.Result<Nat, Text> {
+        // Player registration check
         switch (playerRegistry.get(playerId)) {
-            case (null) { return #err("Player not registered") };
+            case (null) { 
+                return #err("Player not registered") 
+            };
             case (_) {
                 // Get current deposits
                 let deposits = switch (depositRecords.get(playerId)) {
-                    case (null) { { Type1 = 0; Type2 = 0; Type3 = 0; Type4 = 0 } };
+                    case (null) { 
+                        { Type1 = 0; Type2 = 0; Type3 = 0; Type4 = 0 } 
+                    };
                     case (?deps) { deps };
                 };
 
@@ -171,16 +189,20 @@ actor CrystalBank {
                 _logTransaction(playerId, "Crystal to FUDDY Conversion", totalFUDDY);
 
                 return #ok(totalFUDDY);
-            };
+            }
         }
     }
 
-    // FUDDY Transfer Methods
-    public func transferFUDDY(fromPlayerId: PlayerID, toPlayerId: PlayerID, amount: Nat): async Result.Result<Text, Text> {
-        // Validate players
+    // FUDDY Transfer Method
+    public func transferFUDDY(fromPlayerId : PlayerID, toPlayerId : PlayerID, amount : Nat) : async Result.Result<Text, Text> {
+        // Validate both players
         switch (playerRegistry.get(fromPlayerId), playerRegistry.get(toPlayerId)) {
-            case (null, _) { return #err("Sender not registered") };
-            case (_, null) { return #err("Receiver not registered") };
+            case (null, _) { 
+                return #err("Sender not registered") 
+            };
+            case (_, null) { 
+                return #err("Receiver not registered") 
+            };
             case (_, _) {
                 // Get sender's balance
                 let senderBalance = switch (balances.get(fromPlayerId)) {
@@ -211,18 +233,21 @@ actor CrystalBank {
         }
     }
 
-    public func getBalance(playerId: PlayerID): async Nat {
+    // Get Player Balance
+    public func getBalance(playerId : PlayerID) : async Nat {
         switch (balances.get(playerId)) {
             case (null) { 0 };
             case (?balance) { balance };
         }
     }
 
-    // Market Interaction Methods
-    public func buyFUDDY(playerId: PlayerID, amount: Nat): async Result.Result<Text, Text> {
+    // Buy FUDDY Method
+    public func buyFUDDY(playerId : PlayerID, amount : Nat) : async Result.Result<Text, Text> {
         // Validate player
         switch (playerRegistry.get(playerId)) {
-            case (null) { return #err("Player not registered") };
+            case (null) { 
+                return #err("Player not registered") 
+            };
             case (_) {
                 // Validate amount
                 if (amount <= 0) {
@@ -241,34 +266,23 @@ actor CrystalBank {
                 _logTransaction(playerId, "FUDDY Purchase", amount);
 
                 return #ok("Purchase successful");
-            };
+            }
         }
     }
 
     // Transaction History Methods
-    private func _logTransaction(playerId: PlayerID, action: Text, amount: Nat): () {
-        let record : TransactionRecord = {
-            action = action;
-            amount = amount;
-            timestamp = Time.now();
-            playerId = playerId;
-        };
-
-        transactionHistory := Array.append(transactionHistory, [record]);
-    }
-
-    public func getTransactionHistory(): async [TransactionRecord] {
+    public func getTransactionHistory() : async [TransactionRecord] {
         transactionHistory
     }
 
-    public func getPlayerTransactions(playerId: PlayerID): async [TransactionRecord] {
-        Array.filter(transactionHistory, func(record: TransactionRecord): Bool {
+    public func getPlayerTransactions(playerId : PlayerID) : async [TransactionRecord] {
+        Array.filter(transactionHistory, func(record : TransactionRecord) : Bool {
             record.playerId == playerId
         })
     }
 
     // Economic Management Methods
-    public func updateConversionRate(crystalType: Text, newRate: Nat): async Bool {
+    public func updateConversionRate(crystalType : Text, newRate : Nat) : async Bool {
         switch (crystalType) {
             case ("Type1") {
                 conversionRates := { 
@@ -307,7 +321,8 @@ actor CrystalBank {
         return true;
     }
 
-    public query func getCurrentConversionRates(): async ?{Type1 : Nat; Type2 : Nat; Type3 : Nat; Type4 : Nat} {
+    // Get Current Conversion Rates
+    public query func getCurrentConversionRates() : async ?{Type1 : Nat; Type2 : Nat; Type3 : Nat; Type4 : Nat} {
         ?conversionRates
     }
 }
