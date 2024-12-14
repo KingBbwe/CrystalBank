@@ -1,11 +1,13 @@
+import Result "mo:base/Result";
 import HashMap "mo:base/HashMap";
+import Text "mo:base/Text";
 
 actor CrystalConversion {
     type PlayerID = Text;
     type CrystalType = { Type1: Nat; Type2: Nat; Type3: Nat; Type4: Nat };
 
     stable var conversionRates: CrystalType = { Type1 = 1; Type2 = 5; Type3 = 10; Type4 = 20 };
-    stable var depositRecords: HashMap.HashMap<PlayerID, CrystalType> = HashMap.HashMap();
+    stable var depositRecords = HashMap.HashMap<PlayerID, CrystalType>(10, Text.equal, Text.hash);
 
     public shared func updateConversionRate(crystal: Text, newRate: Nat): async Bool {
         switch (crystal) {
@@ -18,7 +20,7 @@ actor CrystalConversion {
         return true;
     };
 
-    public shared func depositCrystals(playerId: PlayerID, crystalType: Text, amount: Nat): async Result<Text, Text> {
+    public shared func depositCrystals(playerId: PlayerID, crystalType: Text, amount: Nat): async Result.Result<Text, Text> {
         if (amount <= 0) {
             return #err("Amount must be positive");
         };
@@ -35,7 +37,7 @@ actor CrystalConversion {
         return #ok("Deposit successful");
     };
 
-    public shared func convertCrystalsToFUDDY(playerId: PlayerID): async Result<Nat, Text> {
+    public shared func convertCrystalsToFUDDY(playerId: PlayerID): async Result.Result<Nat, Text> {
         let deposits = depositRecords.get(playerId).unwrapOr({ Type1 = 0; Type2 = 0; Type3 = 0; Type4 = 0 });
         let totalFUDDY = (deposits.Type1 * conversionRates.Type1) +
                          (deposits.Type2 * conversionRates.Type2) +
