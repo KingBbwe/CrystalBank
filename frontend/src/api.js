@@ -1,18 +1,22 @@
 import { Actor, HttpAgent } from "@dfinity/agent";
 import { idlFactory as CrystalBankIDL } from "./declarations/CrystalBank";
 
-const canisterId = process.env.REACT_APP_CRYSTAL_BANK_CANISTER_ID;
+// Use the environment variable for the canister ID, defaulting to the local canister ID for development
+const canisterId = process.env.REACT_APP_CRYSTAL_BANK_CANISTER_ID || "rrkah-fqaaa-aaaaa-aaaaq-cai";
 
 // Create a reusable actor for the Crystal Bank canister
 const createActor = (canisterId, options) => {
     const agent = new HttpAgent(options);
     if (process.env.NODE_ENV === "development") {
-        agent.fetchRootKey(); // Fetch the root key for development
+        agent.fetchRootKey(); // Fetch the root key for local development
     }
     return Actor.createActor(CrystalBankIDL, { agent, canisterId });
 };
 
-export const crystalBank = createActor(canisterId, { host: "https://ic0.app" });
+// Create the actor for the local replica (or production if set)
+export const crystalBank = createActor(canisterId, {
+    host: process.env.NODE_ENV === "development" ? "http://localhost:8000" : "https://ic0.app",
+});
 
 // API functions
 
