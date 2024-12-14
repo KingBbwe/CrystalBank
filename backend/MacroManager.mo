@@ -13,30 +13,49 @@ actor MacroManager {
     private stable var conversionRate : Float = 1.0;
     private stable var totalCrystals : Nat = 0;
     private stable var totalFUDDY : Nat = 0;
+    private stable var systemReserveRealFuddy : Nat = 0;
+    private stable var totalCirculatingRealFuddy : Nat = 0;
+    private stable var totalCirculatingInGameFuddy : Nat = 0;
 
     // Player economic activity tracking
     type PlayerEconomicProfile = {
+        realFuddyBalance : Nat;
+        inGameFuddyBalance : Nat;
+        crystalBalance : Nat;
         totalDeposits : Nat;
         totalWithdrawals : Nat;
-        lastActivityTimestamp : Time.Time;
         behaviorScore : Float;
+        lastActivityTimestamp : Time.Time;
     };
 
-    private stable var playerProfiles : [(Text, PlayerEconomicProfile)] = [];
-    private var playerProfilesMap = HashMap.fromIter<Text, PlayerEconomicProfile>(
-        playerProfiles.vals(), 
-        10, 
-        Text.equal, 
-        Text.hash
+    private stable var playerProfiles : [(Principal, PlayerEconomicProfile)] = [];
+    private var playerProfilesMap = HashMap.fromIter<Principal, PlayerEconomicProfile>(
+        playerProfiles.vals(),
+        10,
+        Principal.equal,
+        Principal.hash
     );
 
-    // Machine Learning Inspired Economic Adjustment Function
+    // Conversion policies
+    type ConversionPolicy = {
+        minRealFuddyForConversion : Nat;
+        conversionFeePercentage : Float;
+        dailyTransferLimit : Nat;
+    };
+
+    private stable var conversionPolicy : ConversionPolicy = {
+        minRealFuddyForConversion = 100_000;
+        conversionFeePercentage = 0.05;
+        dailyTransferLimit = 1_000_000;
+    };
+
+    // Adjust economic parameters dynamically
     public func adjustEconomicParameters(
-        supply : Nat, 
+        supply : Nat,
         demand : Nat
     ) : async Float {
         let supplyDemandRatio = Float.fromInt(demand) / Float.fromInt(supply);
-        
+
         // Dynamic conversion rate adjustment
         let adjustedRate = switch (supplyDemandRatio) {
             case (r) if (r > 1.5) { conversionRate * 1.1 };  // High demand
@@ -48,32 +67,38 @@ actor MacroManager {
         return adjustedRate;
     };
 
-    // Log and update player economic activity
+    // Update player economic profile with redundancy checks
     public func updatePlayerEconomicProfile(
-        playerId : Text, 
-        actionType : Text, 
+        playerId : Principal,
+        actionType : Text,
         amount : Nat
     ) : async Result.Result<Text, Text> {
         switch (playerProfilesMap.get(playerId)) {
             case (null) {
                 let newProfile : PlayerEconomicProfile = {
+                    realFuddyBalance = 0;
+                    inGameFuddyBalance = 0;
+                    crystalBalance = 0;
                     totalDeposits = if (actionType == "deposit") amount else 0;
                     totalWithdrawals = if (actionType == "withdraw") amount else 0;
-                    lastActivityTimestamp = Time.now();
                     behaviorScore = 1.0;
+                    lastActivityTimestamp = Time.now();
                 };
                 playerProfilesMap.put(playerId, newProfile);
             };
             case (?existingProfile) {
                 let updatedProfile = {
-                    totalDeposits = if (actionType == "deposit") 
-                        existingProfile.totalDeposits + amount 
+                    realFuddyBalance = existingProfile.realFuddyBalance;
+                    inGameFuddyBalance = existingProfile.inGameFuddyBalance;
+                    crystalBalance = existingProfile.crystalBalance;
+                    totalDeposits = if (actionType == "deposit")
+                        existingProfile.totalDeposits + amount
                         else existingProfile.totalDeposits;
-                    totalWithdrawals = if (actionType == "withdraw") 
-                        existingProfile.totalWithdrawals + amount 
+                    totalWithdrawals = if (actionType == "withdraw")
+                        existingProfile.totalWithdrawals + amount
                         else existingProfile.totalWithdrawals;
-                    lastActivityTimestamp = Time.now();
                     behaviorScore = calculateBehaviorScore(existingProfile, amount, actionType);
+                    lastActivityTimestamp = Time.now();
                 };
                 playerProfilesMap.put(playerId, updatedProfile);
             };
@@ -81,13 +106,75 @@ actor MacroManager {
         #ok("Profile Updated")
     };
 
-    // Simple behavior scoring mechanism
+    // Convert in-game FUDDY to real $FUDDY with fee calculation
+    public func convertToRealFuddy(
+        playerId : Principal,
+        amount : Nat
+    ) : async Result.Result<Text, Text> {
+        let ?playerProfile = playerProfilesMap.get(playerId)
+            else return #err("Player not found");
+
+        if (playerProfile.inGameFuddyBalance < amount) {
+            return #err("Insufficient in-game FUDDY balance");
+        };
+
+        if (amount < conversionPolicy.minRealFuddyForConversion) {
+            return #err("Conversion amount below minimum threshold");
+        };
+
+        let fee = Float.fromInt(amount) * conversionPolicy.conversionFeePercentage;
+        let netAmount = amount - Nat.fromFloat(fee);
+
+        let updatedProfile = {
+            playerProfile with
+            inGameFuddyBalance = playerProfile.inGameFuddyBalance - amount;
+            realFuddyBalance = playerProfile.realFuddyBalance + netAmount;
+        };
+
+        systemReserveRealFuddy += Nat.fromFloat(fee);
+        totalCirculatingInGameFuddy -= amount;
+        totalCirculatingRealFuddy += netAmount;
+
+        playerProfilesMap.put(playerId, updatedProfile);
+
+        #ok("Conversion Successful")
+    };
+
+    // Retrieve economic snapshot
+    public query func getEconomicSnapshot() : async {
+        totalCrystals : Nat;
+        totalFUDDY : Nat;
+        systemReserve : Nat;
+        conversionRate : Float;
+    } {
+        {
+            totalCrystals = totalCrystals;
+            totalFUDDY = totalFUDDY;
+            systemReserve = systemReserveRealFuddy;
+            conversionRate = conversionRate;
+        }
+    };
+
+    // System upgrade hooks
+    system func preupgrade() {
+        playerProfiles := Iter.toArray(playerProfilesMap.entries());
+    };
+
+    system func postupgrade() {
+        playerProfilesMap := HashMap.fromIter<Principal, PlayerEconomicProfile>(
+            playerProfiles.vals(),
+            10,
+            Principal.equal,
+            Principal.hash
+        );
+    };
+
+    // Utility for calculating behavior score
     private func calculateBehaviorScore(
-        profile : PlayerEconomicProfile, 
-        amount : Nat, 
+        profile : PlayerEconomicProfile,
+        amount : Nat,
         actionType : Text
     ) : Float {
-        // Basic scoring logic based on deposit/withdrawal patterns
         let baseScore = profile.behaviorScore;
         let scoreFactor = switch (actionType) {
             case ("deposit") { 1.1 };
@@ -96,31 +183,4 @@ actor MacroManager {
         };
         return baseScore * scoreFactor;
     };
-
-    // Retrieve comprehensive economic snapshot
-    public query func getEconomicSnapshot() : async {
-        totalCrystals : Nat;
-        totalFUDDY : Nat;
-        currentConversionRate : Float;
-    } {
-        {
-            totalCrystals = totalCrystals;
-            totalFUDDY = totalFUDDY;
-            currentConversionRate = conversionRate;
-        }
-    };
-
-    // System upgrade hook to persist data
-    system func preupgrade() {
-        playerProfiles := Iter.toArray(playerProfilesMap.entries());
-    };
-
-    system func postupgrade() {
-        playerProfilesMap := HashMap.fromIter<Text, PlayerEconomicProfile>(
-            playerProfiles.vals(), 
-            10, 
-            Text.equal, 
-            Text.hash
-        );
-    }
 }
