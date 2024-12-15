@@ -7,6 +7,7 @@ import Time "mo:base/Time";
 import Array "mo:base/Array";
 import Float "mo:base/Float";
 import Principal "mo:base/Principal";
+import Iter "mo:base/Iter";
 
 actor MacroManager {
     // Economic parameters
@@ -57,11 +58,9 @@ actor MacroManager {
         let supplyDemandRatio = Float.fromInt(demand) / Float.fromInt(supply);
 
         // Dynamic conversion rate adjustment
-        let adjustedRate = switch (supplyDemandRatio) {
-            case (r) if (r > 1.5) { conversionRate * 1.1 };  // High demand
-            case (r) if (r < 0.5) { conversionRate * 0.9 };  // Low demand
-            case (_) { conversionRate };                     // Stable state
-        };
+        let adjustedRate: Float = if (supplyDemandRatio > 1.5) { conversionRate * 1.1 } 
+        else if (supplyDemandRatio < 0.5) { conversionRate * 0.9 } 
+        else { conversionRate };
 
         conversionRate := adjustedRate;
         return adjustedRate;
@@ -123,12 +122,12 @@ actor MacroManager {
         };
 
         let fee = Float.fromInt(amount) * conversionPolicy.conversionFeePercentage;
-        let netAmount = amount - Nat.fromFloat(fee);
+        let netAmount = Float.fromInt(amount) - fee;
 
         let updatedProfile = {
             playerProfile with
             inGameFuddyBalance = playerProfile.inGameFuddyBalance - amount;
-            realFuddyBalance = playerProfile.realFuddyBalance + netAmount;
+            realFuddyBalance = Float.fromInt(playerProfile.realFuddyBalance) + netAmount;
         };
 
         systemReserveRealFuddy += Nat.fromFloat(fee);
