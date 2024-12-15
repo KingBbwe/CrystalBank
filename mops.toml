@@ -3,7 +3,7 @@ name = "CrystalBank"
 version = "1.0.0"
 description = "A Motoko-based decentralized banking platform for The Chronicles of Auld Ewe TTRPG."
 license = "MIT"
-authors = ["Mutenguna FM Nalubamba <fbmukakanga@gmail.com>"]
+author = ["Mutenguna FM Nalubamba <fbmukakanga@gmail.com>"]
 
 [dependencies]
 base = { version = "0.1.1", source = "mo:base" }  # Standard collection types and utilities
