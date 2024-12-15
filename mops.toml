@@ -6,20 +6,40 @@ license = "MIT"
 authors = ["Mutenguna FM Nalubamba <fbmukakanga@gmail.com>"]
 
 [dependencies]
-base = { version = "0.1.1", source = "mo:base" }               # Provides standard collection types and utilities.
-mo-crypto = { version = "0.1.0", source = "mo:crypto" }        # Cryptographic utilities for Motoko.
-mo-utils = { version = "0.1.2", source = "mo:utils" }          # General utility functions for Motoko.
-mo-validation = { version = "0.1.0", source = "mo:validation" } # Input validation utilities.
+base = { version = "0.1.1", source = "mo:base" }  # Standard collection types and utilities
+mo-crypto = { version = "0.1.0", source = "mo:crypto" }  # Cryptographic utilities
+mo-utils = { version = "0.1.2", source = "mo:utils" }  # General utility functions
+mo-validation = { version = "0.1.0", source = "mo:validation" }  # Input validation utilities
 
 [canisters]
-MacroManager = {
-  main = "MacroManager.mo",
-  candid = "MacroManager.did",
-  wasm = "MacroManager.wasm",
-  type = "custom",
+CrystalBank = {
+  main = "src/CrystalBank.mo"
+  candid = "src/CrystalBank.did"
+  wasm = "src/CrystalBank.wasm"
+  type = "custom"
   dependencies = ["base", "mo-crypto", "mo-utils", "mo-validation"]
-  # entry_points = ["transferRealFuddy", "convertToRealFuddy", "getEconomicHealthIndicators", "adjustAccountBehaviorScore"]
+  entry_points = ["registerPlayer", "depositCrystals", "convertCrystalsToFUDDY", "transferFUDDY", "getBalance"]
 }
 
+MacroManager = {
+  main = "MacroManager.mo"
+  candid = "MacroManager.did"
+  wasm = "MacroManager.wasm"
+  type = "custom"
+  dependencies = ["base", "mo-crypto", "mo-utils", "mo-validation"]
+}
+
+[frontend]
+entry = "frontend.js"  # Defines the entry point for the front-end
+output = "dist"  # Directory for compiled assets
+canisters = ["CrystalBank"]  # List of associated canisters
+
 [build]
-target = "wasm32-unknown-unknown" # Target for compiling the project.
+target = "wasm32-unknown-unknown"  # Target for compiling the project
+optimize = true  # Ensures optimized builds
+
+[logging]
+level = "info"  # Set logging level to info for better traceability
+
+[environment]
+canister_id = "ryjl3-tyaaa-aaaaa-aaaba-cai"  # Deployed canister ID for the CrystalBank system
