@@ -1,185 +1,583 @@
 // Macro Manager Canister for Crystal Bank Economic System
-import Result "mo:base/Result";
-import HashMap "mo:base/HashMap";
-import Nat "mo:base/Nat";
-import Text "mo:base/Text";
-import Time "mo:base/Time";
-import Array "mo:base/Array";
-import Float "mo:base/Float";
-import Principal "mo:base/Principal";
-import Iter "mo:base/Iter";
 
-actor MacroManager {
-    // Economic parameters
-    private stable var conversionRate : Float = 1.0;
-    private stable var totalCrystals : Nat = 0;
-    private stable var totalFUDDY : Nat = 0;
-    private stable var systemReserveRealFuddy : Nat = 0;
-    private stable var totalCirculatingRealFuddy : Nat = 0;
-    private stable var totalCirculatingInGameFuddy : Nat = 0;
+Import Result “mo:base/Result”;
 
-    // Player economic activity tracking
-    type PlayerEconomicProfile = {
-        realFuddyBalance : Nat;
-        inGameFuddyBalance : Nat;
-        crystalBalance : Nat;
-        totalDeposits : Nat;
-        totalWithdrawals : Nat;
-        behaviorScore : Float;
-        lastActivityTimestamp : Time.Time;
+Import HashMap “mo:base/HashMap”;
+
+Import Nat “mo:base/Nat”;
+
+Import Text “mo:base/Text”;
+
+Import Time “mo:base/Time”;
+
+Import Array “mo:base/Array”;
+
+Import Float “mo:base/Float”;
+
+Import Principal “mo:base/Principal”;
+
+Import Buffer “mo:base/Buffer”;
+
+Import Option “mo:base/Option”;
+
+
+
+Actor MacroManager {
+
+    // Economic Activity Types
+
+    Type ActivityType = {
+
+        #Deposit;
+
+        #Withdrawal;
+
+        #Transfer;
+
+        #Conversion;
+
+        #Reward;
+
+        #Penalty;
+
     };
 
-    private stable var playerProfiles : [(Principal, PlayerEconomicProfile)] = [];
-    private var playerProfilesMap = HashMap.fromIter<Principal, PlayerEconomicProfile>(
-        playerProfiles.vals(),
-        10,
-        Principal.equal,
+
+
+    // Account Roles
+
+    Type AccountRole = {
+
+        #Player;
+
+        #GM;
+
+        #SystemReserve;
+
+    };
+
+
+
+    // Comprehensive Account Structure
+
+    Type AccountProfile = {
+
+        Principal : Principal;
+
+        Role : AccountRole;
+
+        realFuddyBalance : Nat;
+
+        inGameFuddyBalance : Nat;
+
+        crystalBalance : Nat;
+
+        behaviorScore : Float;
+
+        lastActivityTimestamp : Time.Time;
+
+        activityHistory : [EconomicActivity];
+
+    };
+
+
+
+    // Detailed Economic Activity Logging
+
+    Type EconomicActivity = {
+
+        Timestamp : Time.Time;
+
+        activityType : ActivityType;
+
+        amount : Nat;
+
+        counterparty : ?Principal;
+
+        notes : ?Text;
+
+    };
+
+
+
+    // Conversion and Transfer Policies
+
+    Type ConversionPolicy = {
+
+        minRealFuddyForConversion : Nat;
+
+        conversionFeePercentage : Float;
+
+        dailyTransferLimit : Nat;
+
+    };
+
+
+
+    // Governance and Economic Parameters
+
+    Private stable var conversionPolicy : ConversionPolicy = {
+
+        minRealFuddyForConversion = 100_000; // 100 $FUDDY minimum
+
+        conversionFeePercentage = 0.05; // 5% conversion fee
+
+        dailyTransferLimit = 1_000_000 // 1000 $FUDDY per day
+
+    };
+
+
+
+    // Account Management
+
+    Private stable var accountProfiles = HashMap.HashMap<Principal, AccountProfile>(
+
+        10, 
+
+        Principal.equal, 
+
         Principal.hash
+
     );
 
-    // Conversion policies
-    type ConversionPolicy = {
-        minRealFuddyForConversion : Nat;
-        conversionFeePercentage : Float;
-        dailyTransferLimit : Nat;
-    };
 
-    private stable var conversionPolicy : ConversionPolicy = {
-        minRealFuddyForConversion = 100_000;
-        conversionFeePercentage = 0.05;
-        dailyTransferLimit = 1_000_000;
-    };
 
-    // Adjust economic parameters dynamically
-    public func adjustEconomicParameters(
-        supply : Nat,
-        demand : Nat
-    ) : async Float {
-        let supplyDemandRatio = Float.fromInt(demand) / Float.fromInt(supply);
+    // Economic Stability Mechanisms
 
-        // Dynamic conversion rate adjustment
-        let adjustedRate: Float = if (supplyDemandRatio > 1.5) { conversionRate * 1.1 } 
-        else if (supplyDemandRatio < 0.5) { conversionRate * 0.9 } 
-        else { conversionRate };
+    Private stable var systemReserveRealFuddy : Nat = 0;
 
-        conversionRate := adjustedRate;
-        return adjustedRate;
-    };
+    Private stable var totalCirculatingRealFuddy : Nat = 0;
 
-    // Update player economic profile with redundancy checks
-    public func updatePlayerEconomicProfile(
-        playerId : Principal,
-        actionType : Text,
-        amount : Nat
+    Private stable var totalCirculatingInGameFuddy : Nat = 0;
+
+
+
+    // Transfer Real $FUDDY Between Accounts
+
+    Public shared(msg) func transferRealFuddy(
+
+        Recipient : Principal, 
+
+        Amount : Nat
+
     ) : async Result.Result<Text, Text> {
-        switch (playerProfilesMap.get(playerId)) {
-            case (null) {
-                let newProfile : PlayerEconomicProfile = {
-                    realFuddyBalance = 0;
-                    inGameFuddyBalance = 0;
-                    crystalBalance = 0;
-                    totalDeposits = if (actionType == "deposit") amount else 0;
-                    totalWithdrawals = if (actionType == "withdraw") amount else 0;
-                    behaviorScore = 1.0;
-                    lastActivityTimestamp = Time.now();
-                };
-                playerProfilesMap.put(playerId, newProfile);
-            };
-            case (?existingProfile) {
-                let updatedProfile = {
-                    realFuddyBalance = existingProfile.realFuddyBalance;
-                    inGameFuddyBalance = existingProfile.inGameFuddyBalance;
-                    crystalBalance = existingProfile.crystalBalance;
-                    totalDeposits = if (actionType == "deposit")
-                        existingProfile.totalDeposits + amount
-                        else existingProfile.totalDeposits;
-                    totalWithdrawals = if (actionType == "withdraw")
-                        existingProfile.totalWithdrawals + amount
-                        else existingProfile.totalWithdrawals;
-                    behaviorScore = calculateBehaviorScore(existingProfile, amount, actionType);
-                    lastActivityTimestamp = Time.now();
-                };
-                playerProfilesMap.put(playerId, updatedProfile);
-            };
-        };
-        #ok("Profile Updated")
-    };
 
-    // Convert in-game FUDDY to real $FUDDY with fee calculation
-    public func convertToRealFuddy(
-        playerId : Principal,
-        amount : Nat
-    ) : async Result.Result<Text, Text> {
-        let ?playerProfile = playerProfilesMap.get(playerId)
-            else return #err("Player not found");
+        Let sender = msg.caller;
 
-        if (playerProfile.inGameFuddyBalance < amount) {
-            return #err("Insufficient in-game FUDDY balance");
-        };
 
-        if (amount < conversionPolicy.minRealFuddyForConversion) {
-            return #err("Conversion amount below minimum threshold");
-        };
 
-        let fee = Float.fromInt(amount) * conversionPolicy.conversionFeePercentage;
-        let netAmount = Float.fromInt(amount) - fee;
+        // Validate sender’s account
 
-        let updatedProfile = {
-            playerProfile with
-            inGameFuddyBalance = playerProfile.inGameFuddyBalance - amount;
-            realFuddyBalance = Float.fromInt(playerProfile.realFuddyBalance) + netAmount;
-        };
+        Let ?senderProfile = accountProfiles.get(sender) 
 
-        systemReserveRealFuddy += Nat.fromFloat(fee);
-        totalCirculatingInGameFuddy -= amount;
-        totalCirculatingRealFuddy += netAmount;
+            Else return #err(“Sender account not found”);
 
-        playerProfilesMap.put(playerId, updatedProfile);
 
-        #ok("Conversion Successful")
-    };
 
-    // Retrieve economic snapshot
-    public query func getEconomicSnapshot() : async {
-        totalCrystals : Nat;
-        totalFUDDY : Nat;
-        systemReserve : Nat;
-        conversionRate : Float;
-    } {
-        {
-            totalCrystals = totalCrystals;
-            totalFUDDY = totalFUDDY;
-            systemReserve = systemReserveRealFuddy;
-            conversionRate = conversionRate;
+        // Check sender’s balance
+
+        If (senderProfile.realFuddyBalance < amount) {
+
+            Return #err(“Insufficient Real $FUDDY balance”);
+
         }
-    };
 
-    // System upgrade hooks
-    system func preupgrade() {
-        playerProfiles := Iter.toArray(playerProfilesMap.entries());
-    };
 
-    system func postupgrade() {
-        playerProfilesMap := HashMap.fromIter<Principal, PlayerEconomicProfile>(
-            playerProfiles.vals(),
-            10,
-            Principal.equal,
-            Principal.hash
-        );
-    };
 
-    // Utility for calculating behavior score
-    private func calculateBehaviorScore(
-        profile : PlayerEconomicProfile,
-        amount : Nat,
-        actionType : Text
-    ) : Float {
-        let baseScore = profile.behaviorScore;
-        let scoreFactor = switch (actionType) {
-            case ("deposit") { 1.1 };
-            case ("withdraw") { 0.9 };
-            case (_) { 1.0 };
+        // Validate recipient’s account
+
+        Let ?recipientProfile = accountProfiles.get(recipient) 
+
+            Else return #err(“Recipient account not found”);
+
+
+
+        // Check daily transfer limit
+
+        Let dailyTransferTotal = calculateDailyTransferTotal(sender);
+
+        If (dailyTransferTotal + amount > conversionPolicy.dailyTransferLimit) {
+
+            Return #err(“Daily transfer limit exceeded”);
+
+        }
+
+
+
+        // Perform transfer
+
+        Let updatedSenderProfile : AccountProfile = {
+
+            senderProfile with 
+
+            realFuddyBalance = senderProfile.realFuddyBalance – amount;
+
+            activityHistory = Array.append(
+
+                senderProfile.activityHistory, 
+
+                [_createEconomicActivity(
+
+                    #Transfer, 
+
+                    Amount, 
+
+                    ?recipient, 
+
+                    ?”Real $FUDDY Transfer to “ # debug_show(recipient)
+
+                )]
+
+            )
+
         };
-        return baseScore * scoreFactor;
-    };
+
+
+
+        Let updatedRecipientProfile : AccountProfile = {
+
+            recipientProfile with 
+
+            realFuddyBalance = recipientProfile.realFuddyBalance + amount;
+
+            activityHistory = Array.append(
+
+                recipientProfile.activityHistory, 
+
+                [_createEconomicActivity(
+
+                    #Transfer, 
+
+                    Amount, 
+
+                    ?sender, 
+
+                    ?”Real $FUDDY Received from “ # debug_show(sender)
+
+                )]
+
+            )
+
+        };
+
+
+
+        accountProfiles.put(sender, updatedSenderProfile);
+
+        accountProfiles.put(recipient, updatedRecipientProfile);
+
+
+
+        #ok(“Transfer Successful”)
+
+    }
+
+
+
+    // Convert In-Game FUDDY to Real $FUDDY
+
+    Public shared(msg) func convertToRealFuddy(
+
+        Amount : Nat
+
+    ) : async Result.Result<Text, Text> {
+
+        Let caller = msg.caller;
+
+
+
+        // Validate account
+
+        Let ?accountProfile = accountProfiles.get(caller) 
+
+            Else return #err(“Account not found”);
+
+
+
+        // Check conversion eligibility
+
+        If (accountProfile.inGameFuddyBalance < amount) {
+
+            Return #err(“Insufficient In-Game FUDDY balance”);
+
+        }
+
+
+
+        // Check minimum conversion threshold
+
+        If (amount < conversionPolicy.minRealFuddyForConversion) {
+
+            Return #err(“Conversion amount below minimum threshold”);
+
+        }
+
+
+
+        // Calculate conversion with fee
+
+        Let conversionFee = Float.toInt(Float.fromInt(amount) * conversionPolicy.conversionFeePercentage);
+
+        Let netConversionAmount = amount – conversionFee;
+
+
+
+        // Update account balances
+
+        Let updatedProfile : AccountProfile = {
+
+            accountProfile with
+
+            inGameFuddyBalance = accountProfile.inGameFuddyBalance – amount;
+
+            realFuddyBalance = accountProfile.realFuddyBalance + netConversionAmount;
+
+            activityHistory = Array.append(
+
+                accountProfile.activityHistory, 
+
+                [_createEconomicActivity(
+
+                    #Conversion, 
+
+                    Amount, 
+
+                    Null, 
+
+                    ?”Conversion to Real $FUDDY with fee”
+
+                )]
+
+            )
+
+        };
+
+
+
+        // Update system reserves
+
+        systemReserveRealFuddy += conversionFee;
+
+        totalCirculatingRealFuddy += netConversionAmount;
+
+        totalCirculatingInGameFuddy -= amount;
+
+
+
+        accountProfiles.put(caller, updatedProfile);
+
+
+
+        #ok(“Conversion Successful”)
+
+    }
+
+
+
+    // Advanced Economic Health Check
+
+    Public query func getEconomicHealthIndicators() : async {
+
+        totalRealFuddy : Nat;
+
+        totalInGameFuddy : Nat;
+
+        systemReserve : Nat;
+
+        averageBehaviorScore : Float;
+
+    } {
+
+        Let behaviorScores = Buffer.Buffer<Float>(accountProfiles.size());
+
+        
+
+        For ((_, profile) in accountProfiles.entries()) {
+
+            behaviorScores.add(profile.behaviorScore);
+
+        };
+
+
+
+        {
+
+            totalRealFuddy = totalCirculatingRealFuddy;
+
+            totalInGameFuddy = totalCirculatingInGameFuddy;
+
+            systemReserve = systemReserveRealFuddy;
+
+            averageBehaviorScore = _calculateAverageBehaviorScore(behaviorScores);
+
+        }
+
+    }
+
+
+
+    // Penalty and Reward Mechanism
+
+    Public shared(msg) func adjustAccountBehaviorScore(
+
+        targetAccount : Principal,
+
+        adjustmentType : {#Reward; #Penalty},
+
+        amount : Float
+
+    ) : async Result.Result<Text, Text> {
+
+        Let adminCaller = msg.caller;
+
+
+
+        // Ensure only GMs can adjust scores
+
+        Let ?callerProfile = accountProfiles.get(adminCaller)
+
+            Else return #err(“Unauthorized”);
+
+        
+
+        If (callerProfile.role != #GM) {
+
+            Return #err(“Only Game Masters can adjust behavior scores”);
+
+        }
+
+
+
+        Let ?targetProfile = accountProfiles.get(targetAccount)
+
+            Else return #err(“Target account not found”);
+
+
+
+        Let adjustedScore = switch (adjustmentType) {
+
+            Case (#Reward) { targetProfile.behaviorScore + amount };
+
+            Case (#Penalty) { targetProfile.behaviorScore – amount };
+
+        };
+
+
+
+        // Prevent score from going below zero
+
+        Let finalScore = Float.max(0, adjustedScore);
+
+
+
+        Let updatedProfile : AccountProfile = {
+
+            targetProfile with 
+
+            behaviorScore = finalScore;
+
+            activityHistory = Array.append(
+
+                targetProfile.activityHistory, 
+
+                [_createEconomicActivity(
+
+                    Switch (adjustmentType) {
+
+                        Case (#Reward) #Reward;
+
+                        Case (#Penalty) #Penalty;
+
+                    }, 
+
+                    Nat.fromFloat(amount), 
+
+                    ?adminCaller, 
+
+                    ?”Behavior Score Adjustment”
+
+                )]
+
+            )
+
+        };
+
+
+
+        accountProfiles.put(targetAccount, updatedProfile);
+
+
+
+        #ok(“Behavior Score Adjusted”)
+
+    }
+
+
+
+    // Utility Functions
+
+    Private func _createEconomicActivity(
+
+        activityType : ActivityType, 
+
+        amount : Nat, 
+
+        counterparty : ?Principal,
+
+        notes : ?Text
+
+    ) : EconomicActivity {
+
+        {
+
+            Timestamp = Time.now();
+
+            activityType = activityType;
+
+            amount = amount;
+
+            counterparty = counterparty;
+
+            notes = notes;
+
+        }
+
+    }
+
+
+
+    Private func calculateDailyTransferTotal(
+
+        Account : Principal
+
+    ) : Nat {
+
+        // Calculate total transfers in last 24 hours
+
+        0 // Placeholder – would implement full time-based calculation
+
+    }
+
+
+
+    Private func _calculateAverageBehaviorScore(
+
+        Scores : Buffer.Buffer<Float>
+
+    ) : Float {
+
+        Var total = 0.0;
+
+        For (score in scores.vals()) {
+
+            Total += score;
+
+        };
+
+        Total / Float.fromInt(scores.size())
+
+    }
+
 }
+
+
