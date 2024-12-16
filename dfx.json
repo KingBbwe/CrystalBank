@@ -1,31 +1,31 @@
 {
   "canisters": {
     "CrystalBank": {
-      "main": "src/backend/CrystalBank.mo", // Motoko source code for the CrystalBank backend
-      "type": "motoko", // Specifies the backend canister type as Motoko
-      "candid": "src/backend/CrystalBank.did" // Location of the Candid interface for the CrystalBank canister
+      "main": "src/backend/CrystalBank.mo",
+      "type": "motoko", 
+      "candid": "src/backend/CrystalBank.did" 
     },
     "frontend": {
-      "source": ["frontend/src"], // Source files for the frontend application
-      "main": "frontend/dist", // Build output directory for the frontend
-      "type": "assets" // Specifies the frontend canister as an assets canister
+      "source": ["frontend/src"],
+      "main": "frontend/dist",
+      "type": "assets"
     }
   },
   "networks": {
     "local": {
-      "bind": "127.0.0.1:8000", // Local development network binding address
-      "type": "ephemeral" // Ephemeral type ensures the network resets between sessions
+      "bind": "127.0.0.1:8000", 
+      "type": "ephemeral" 
     },
     "ic": {
-      "providers": ["https://ic0.app"], // Internet Computer network provider endpoint
-      "type": "persistent" // Persistent network type for production deployment
+      "providers": ["https://ic0.app"],
+      "type": "persistent" 
     }
   },
   "defaults": {
     "build": {
-      "output": "dist" // Default build output directory
+      "output": "dist"
     },
-    "network": "local" // Default network to use for development
+    "network": "local"
   },
   "version": 1
 }
