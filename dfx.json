@@ -9,6 +9,10 @@
       "source": ["frontend/src"],
       "main": "frontend/dist",
       "type": "assets"
+    },
+    "MacroManager": {
+      "main": "src/macro_manager_project/main.mo",
+      "type": "motoko"
     }
   },
   "networks": {
