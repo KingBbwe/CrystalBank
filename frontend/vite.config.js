@@ -8,7 +8,7 @@ export default defineConfig({
         port: 3000,
     },
     build: {
-        outDir: "src/build", // Adjust path since 'root' is now 'src'
+        outDir: "../build", // Adjust path since 'root' is now 'src'
     },
     base: "./", // Ensures relative paths for assets
 });
