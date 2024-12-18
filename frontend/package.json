@@ -4,7 +4,7 @@
   "description": "A decentralized banking system for The Chronicles of Auld Ewe TTRPG, built on the Internet Computer.",
   "main": "src/index.js",
   "scripts": {
-    "start": "vite",
+    "dev": "vite",
     "build": "vite build",
     "serve": "vite preview",
     "test": "jest"
