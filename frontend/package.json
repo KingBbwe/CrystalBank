@@ -31,5 +31,12 @@
   ],
   "author": "Your Name",
   "license": "MIT"
+{
+  "scripts": {
+    "build": "rollup -c rollup.config.js"
+  }
+}
+
+  
 }
 
