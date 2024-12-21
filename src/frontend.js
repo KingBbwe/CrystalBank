@@ -2,7 +2,6 @@
 
 import { Actor, HttpAgent } from '@dfinity/agent';
 import { AuthClient } from '@dfinity/auth-client';
-import { rateLimit } from 'utils/rate-limit'; // Hypothetical rate limiting utility
 
 // Custom error types
 class CrystalBankError extends Error {
@@ -40,12 +39,45 @@ const CONFIG = {
 // Define the canister interface (IDL)
 const crystalBankIdl = /* IDL definition */ {};
 
+// Rate limiter implementation
+class RateLimiter {
+    constructor(windowMs, maxRequests) {
+        this.windowMs = windowMs;
+        this.maxRequests = maxRequests;
+        this.requests = new Map();
+    }
+
+    async checkLimit(key) {
+        const now = Date.now();
+        const windowStart = now - this.windowMs;
+        
+        // Clean old requests
+        this.requests.forEach((timestamp, reqKey) => {
+            if (timestamp < windowStart) {
+                this.requests.delete(reqKey);
+            }
+        });
+
+        // Get requests in current window
+        const requestCount = Array.from(this.requests.values())
+            .filter(timestamp => timestamp > windowStart)
+            .length;
+
+        if (requestCount >= this.maxRequests) {
+            throw new CrystalBankError('Rate limit exceeded', 'RATE_LIMIT_ERROR');
+        }
+
+        // Add new request
+        this.requests.set(`${key}-${now}`, now);
+    }
+}
+
 /**
  * Retry logic for async operations
  * @template T
- * @param {() => Promise<T>} operation - Operation to retry
- * @param {number} maxRetries - Maximum number of retry attempts
- * @param {number} delay - Delay between retries in ms
+ * @param {() => Promise<T>} operation
+ * @param {number} maxRetries
+ * @param {number} delay
  * @returns {Promise<T>}
  */
 async function withRetry(operation, maxRetries = CONFIG.MAX_RETRIES, delay = CONFIG.RETRY_DELAY) {
@@ -68,15 +100,10 @@ async function withRetry(operation, maxRetries = CONFIG.MAX_RETRIES, delay = CON
     throw lastError;
 }
 
-/**
- * Determines if an error is retryable
- * @param {Error} error - Error to check
- * @returns {boolean}
- */
 function isRetryableError(error) {
     return error.message.includes('network') || 
            error.message.includes('timeout') ||
-           error.code === 'IC0503'; // Canister execution trapped
+           error.code === 'IC0503';
 }
 
 class CrystalBankClient {
@@ -85,30 +112,26 @@ class CrystalBankClient {
         this.actor = null;
         this.authClient = null;
         this.isInitialized = false;
+        this.rateLimiter = new RateLimiter(
+            CONFIG.RATE_LIMIT.windowMs,
+            CONFIG.RATE_LIMIT.maxRequests
+        );
     }
 
-    /**
-     * Initialize the client
-     * @returns {Promise<void>}
-     */
     async initialize() {
         if (this.isInitialized) return;
 
-        // Initialize auth client
         this.authClient = await AuthClient.create();
         
-        // Create agent with authentication
         this.agent = new HttpAgent({
             host: CONFIG.HOST,
             identity: this.authClient.getIdentity()
         });
 
-        // Fetch root key in development
         if (process.env.NODE_ENV !== "production") {
             await this.agent.fetchRootKey();
         }
 
-        // Create actor
         this.actor = Actor.createActor(crystalBankIdl, {
             agent: this.agent,
             canisterId: CONFIG.CANISTER_ID
@@ -117,10 +140,6 @@ class CrystalBankClient {
         this.isInitialized = true;
     }
 
-    /**
-     * Ensure user is authenticated
-     * @throws {AuthenticationError}
-     */
     async ensureAuthenticated() {
         if (!this.authClient) {
             throw new AuthenticationError('Client not initialized');
@@ -132,38 +151,23 @@ class CrystalBankClient {
         }
     }
 
-    /**
-     * Login user
-     * @returns {Promise<void>}
-     */
     async login() {
         await this.authClient.login({
             identityProvider: 'https://identity.ic0.app',
             onSuccess: () => {
-                // Update agent identity
                 this.agent.replaceIdentity(this.authClient.getIdentity());
             }
         });
     }
 
-    /**
-     * Logout user
-     * @returns {Promise<void>}
-     */
     async logout() {
         await this.authClient.logout();
-        // Reset agent identity
         this.agent.replaceIdentity(await AuthClient.getAnonymousIdentity());
     }
 
-    /**
-     * Register a new player
-     * @param {string} playerId - Unique identifier for the player
-     * @returns {Promise<any>}
-     */
-    @rateLimit(CONFIG.RATE_LIMIT.windowMs, CONFIG.RATE_LIMIT.maxRequests)
     async registerPlayer(playerId) {
         await this.ensureAuthenticated();
+        await this.rateLimiter.checkLimit(`register-${playerId}`);
         
         if (!playerId || typeof playerId !== 'string') {
             throw new ValidationError('Invalid playerId provided');
@@ -184,16 +188,9 @@ class CrystalBankClient {
         });
     }
 
-    /**
-     * Deposit crystals for a player
-     * @param {string} playerId - Unique identifier for the player
-     * @param {string} crystalType - Type of crystal to deposit
-     * @param {number} amount - Amount of crystals to deposit
-     * @returns {Promise<any>}
-     */
-    @rateLimit(CONFIG.RATE_LIMIT.windowMs, CONFIG.RATE_LIMIT.maxRequests)
     async depositCrystals(playerId, crystalType, amount) {
         await this.ensureAuthenticated();
+        await this.rateLimiter.checkLimit(`deposit-${playerId}`);
         
         if (!playerId || !crystalType || typeof amount !== 'number' || amount <= 0) {
             throw new ValidationError('Invalid parameters for crystal deposit');
@@ -214,14 +211,9 @@ class CrystalBankClient {
         });
     }
 
-    /**
-     * Convert crystals to FUDDY tokens
-     * @param {string} playerId - Unique identifier for the player
-     * @returns {Promise<any>}
-     */
-    @rateLimit(CONFIG.RATE_LIMIT.windowMs, CONFIG.RATE_LIMIT.maxRequests)
     async convertCrystalsToFUDDY(playerId) {
         await this.ensureAuthenticated();
+        await this.rateLimiter.checkLimit(`convert-${playerId}`);
         
         if (!playerId) {
             throw new ValidationError('Invalid playerId provided');
