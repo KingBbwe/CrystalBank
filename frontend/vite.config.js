@@ -5,7 +5,7 @@ export default defineConfig({
     root: "src", // Define 'src' as the root directory
     plugins: [react()],
     server: {
-        port: 3000, // Local development server port
+        port: 8000, // Local development server port
     },
     build: {
         outDir: "../build", // Output directory in the project root
