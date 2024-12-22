@@ -11,7 +11,7 @@
       "type": "assets"
     },
     "MacroManager": {
-      "main": "src/macro_manager_project/main.mo",
+      "main": "src/MacroManager/main.mo",
       "type": "motoko"
     }
   },
