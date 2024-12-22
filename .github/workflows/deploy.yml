@@ -19,6 +19,9 @@ jobs:
           curl -o "$HOME/bin/dfx" -L https://sdk.dfinity.org/install.sh
           chmod +x "$HOME/bin/dfx"
           echo "$HOME/bin" >> $GITHUB_PATH
+          # Download and install DFX directly
+          curl -L https://github.com/dfinity/dfx/releases/latest/download/dfx-x86_64-unknown-linux-gnu.tar.gz | tar xz -C "$HOME/bin"
+          echo "$HOME/bin/dfx" >> $GITHUB_PATH
           dfx --version || true  # Ignore version check failure for smooth execution
 
       - name: Start Local Replica
