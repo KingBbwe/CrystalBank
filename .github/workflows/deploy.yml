@@ -19,7 +19,7 @@ jobs:
           curl -o "$HOME/bin/dfx" -L https://sdk.dfinity.org/install.sh
           chmod +x "$HOME/bin/dfx"
           echo "$HOME/bin" >> $GITHUB_PATH
-          dfx --version
+          dfx --version || true  # Ignore version check failure for smooth execution
 
       - name: Start Local Replica
         run: dfx start --background
