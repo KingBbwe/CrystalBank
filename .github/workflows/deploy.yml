@@ -13,10 +13,14 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v3
 
-    - name: Install DFX
-      run: |
-        sh -ci "$(curl -fsSL https://internetcomputer.org/install.sh)"
-        echo 'export PATH=$PATH:$HOME/bin' >> $GITHUB_ENV
+- name: Install DFX
+  run: |
+    mkdir -p "$HOME/bin"
+    curl -o "$HOME/bin/dfx" -L https://sdk.dfinity.org/install.sh
+    chmod +x "$HOME/bin/dfx"
+    echo "$HOME/bin" >> $GITHUB_PATH
+    dfx --version
+
 
     - name: Start Local Replica
       run: dfx start --background
