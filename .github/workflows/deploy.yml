@@ -15,13 +15,16 @@ jobs:
 
       - name: Install DFX
         run: |
+          # Create the bin directory if it doesn't exist
           mkdir -p "$HOME/bin"
-          curl -o "$HOME/bin/dfx" -L https://sdk.dfinity.org/install.sh
-          chmod +x "$HOME/bin/dfx"
-          echo "$HOME/bin" >> $GITHUB_PATH
-          # Download and install DFX directly
+          
+          # Download the latest DFX release tarball
           curl -L https://github.com/dfinity/dfx/releases/latest/download/dfx-x86_64-unknown-linux-gnu.tar.gz | tar xz -C "$HOME/bin"
-          echo "$HOME/bin/dfx" >> $GITHUB_PATH
+          
+          # Add DFX to the PATH
+          echo "$HOME/bin" >> $GITHUB_PATH
+          
+          # Verify installation
           dfx --version || true  # Ignore version check failure for smooth execution
 
       - name: Start Local Replica
