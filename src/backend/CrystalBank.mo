@@ -325,4 +325,3 @@ actor CrystalBank {
     public query func getCurrentConversionRates() : async ?{Type1 : Nat; Type2 : Nat; Type3 : Nat; Type4 : Nat} {
         ?conversionRates
     };
-}
