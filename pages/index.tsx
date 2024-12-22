@@ -17,4 +17,22 @@ const Home = () => {
   );
 };
 
+import React from "react";
+import TransferFuddy from "@/components/MacroManager/TransferFuddy";
+import ConvertToRealFuddy from "@/components/MacroManager/ConvertToRealFuddy";
+import EconomicHealth from "@/components/MacroManager/EconomicHealth";
+import BehaviorScoreAdjustment from "@/components/MacroManager/BehaviorScoreAdjustment";
+
+const Home = () => {
+  return (
+    <div>
+      <h1>Crystal Bank Macro Dashboard</h1>
+      <TransferFuddy />
+      <ConvertToRealFuddy />
+      <EconomicHealth />
+      <BehaviorScoreAdjustment />
+    </div>
+  );
+};
+
 export default Home;
