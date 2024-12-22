@@ -3,7 +3,7 @@ name: Deploy MacroManager Canister
 on:
   push:
     branches:
-      - main
+      - UI-build
 
 jobs:
   deploy:
