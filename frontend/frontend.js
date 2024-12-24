@@ -1,8 +1,6 @@
-// frontend.js
-
 import { Actor, HttpAgent } from '@dfinity/agent';
 import { AuthClient } from '@dfinity/auth-client';
-import { rateLimit } from 'utils/rate-limit'; // Hypothetical rate limiting utility
+import { Principal } from '@dfinity/principal';
 
 // Custom error types
 class CrystalBankError extends Error {
@@ -30,24 +28,43 @@ const CONFIG = {
     CANISTER_ID: "ryjl3-tyaaa-aaaaa-aaaba-cai",
     HOST: "https://ic0.app",
     MAX_RETRIES: 3,
-    RETRY_DELAY: 1000, // ms
+    RETRY_DELAY: 1000,
     RATE_LIMIT: {
-        windowMs: 60000, // 1 minute
+        windowMs: 60000,
         maxRequests: 30
     }
 };
 
-// Define the canister interface (IDL)
-const crystalBankIdl = /* IDL definition */ {};
+// Rate limiter implementation
+class RateLimiter {
+    constructor(windowMs, maxRequests) {
+        this.windowMs = windowMs;
+        this.maxRequests = maxRequests;
+        this.requests = new Map();
+    }
 
-/**
- * Retry logic for async operations
- * @template T
- * @param {() => Promise<T>} operation - Operation to retry
- * @param {number} maxRetries - Maximum number of retry attempts
- * @param {number} delay - Delay between retries in ms
- * @returns {Promise<T>}
- */
+    async checkLimit(key) {
+        const now = Date.now();
+        const windowStart = now - this.windowMs;
+        
+        this.requests.forEach((timestamp, reqKey) => {
+            if (timestamp < windowStart) {
+                this.requests.delete(reqKey);
+            }
+        });
+
+        const requestCount = Array.from(this.requests.values())
+            .filter(timestamp => timestamp > windowStart)
+            .length;
+
+        if (requestCount >= this.maxRequests) {
+            throw new CrystalBankError('Rate limit exceeded', 'RATE_LIMIT_ERROR');
+        }
+
+        this.requests.set(`${key}-${now}`, now);
+    }
+}
+
 async function withRetry(operation, maxRetries = CONFIG.MAX_RETRIES, delay = CONFIG.RETRY_DELAY) {
     let lastError;
     
@@ -68,15 +85,10 @@ async function withRetry(operation, maxRetries = CONFIG.MAX_RETRIES, delay = CON
     throw lastError;
 }
 
-/**
- * Determines if an error is retryable
- * @param {Error} error - Error to check
- * @returns {boolean}
- */
 function isRetryableError(error) {
     return error.message.includes('network') || 
            error.message.includes('timeout') ||
-           error.code === 'IC0503'; // Canister execution trapped
+           error.code === 'IC0503';
 }
 
 class CrystalBankClient {
@@ -85,30 +97,26 @@ class CrystalBankClient {
         this.actor = null;
         this.authClient = null;
         this.isInitialized = false;
+        this.rateLimiter = new RateLimiter(
+            CONFIG.RATE_LIMIT.windowMs,
+            CONFIG.RATE_LIMIT.maxRequests
+        );
     }
 
-    /**
-     * Initialize the client
-     * @returns {Promise<void>}
-     */
     async initialize() {
         if (this.isInitialized) return;
 
-        // Initialize auth client
         this.authClient = await AuthClient.create();
         
-        // Create agent with authentication
         this.agent = new HttpAgent({
             host: CONFIG.HOST,
             identity: this.authClient.getIdentity()
         });
 
-        // Fetch root key in development
         if (process.env.NODE_ENV !== "production") {
             await this.agent.fetchRootKey();
         }
 
-        // Create actor
         this.actor = Actor.createActor(crystalBankIdl, {
             agent: this.agent,
             canisterId: CONFIG.CANISTER_ID
@@ -117,10 +125,6 @@ class CrystalBankClient {
         this.isInitialized = true;
     }
 
-    /**
-     * Ensure user is authenticated
-     * @throws {AuthenticationError}
-     */
     async ensureAuthenticated() {
         if (!this.authClient) {
             throw new AuthenticationError('Client not initialized');
@@ -132,50 +136,29 @@ class CrystalBankClient {
         }
     }
 
-    /**
-     * Login user
-     * @returns {Promise<void>}
-     */
     async login() {
         await this.authClient.login({
             identityProvider: 'https://identity.ic0.app',
             onSuccess: () => {
-                // Update agent identity
                 this.agent.replaceIdentity(this.authClient.getIdentity());
             }
         });
     }
 
-    /**
-     * Logout user
-     * @returns {Promise<void>}
-     */
     async logout() {
         await this.authClient.logout();
-        // Reset agent identity
         this.agent.replaceIdentity(await AuthClient.getAnonymousIdentity());
     }
 
-    /**
-     * Register a new player
-     * @param {string} playerId - Unique identifier for the player
-     * @returns {Promise<any>}
-     */
-    @rateLimit(CONFIG.RATE_LIMIT.windowMs, CONFIG.RATE_LIMIT.maxRequests)
+    // Player Registration Methods
     async registerPlayer(playerId) {
         await this.ensureAuthenticated();
+        await this.rateLimiter.checkLimit(`register-${playerId}`);
         
-        if (!playerId || typeof playerId !== 'string') {
-            throw new ValidationError('Invalid playerId provided');
-        }
-
         return withRetry(async () => {
             try {
-                const result = await this.actor.registerPlayer(playerId);
-                console.log("Registration successful:", result);
-                return result;
+                return await this.actor.registerPlayer(playerId);
             } catch (error) {
-                console.error("Error registering player:", error);
                 throw new CrystalBankError(
                     `Failed to register player: ${error.message}`,
                     'REGISTRATION_ERROR'
@@ -184,16 +167,42 @@ class CrystalBankClient {
         });
     }
 
-    /**
-     * Deposit crystals for a player
-     * @param {string} playerId - Unique identifier for the player
-     * @param {string} crystalType - Type of crystal to deposit
-     * @param {number} amount - Amount of crystals to deposit
-     * @returns {Promise<any>}
-     */
-    @rateLimit(CONFIG.RATE_LIMIT.windowMs, CONFIG.RATE_LIMIT.maxRequests)
+    async isPlayerRegistered(playerId) {
+        await this.ensureAuthenticated();
+        await this.rateLimiter.checkLimit(`check-registration-${playerId}`);
+        
+        return withRetry(async () => {
+            try {
+                return await this.actor.isPlayerRegistered(playerId);
+            } catch (error) {
+                throw new CrystalBankError(
+                    `Failed to check player registration: ${error.message}`,
+                    'REGISTRATION_CHECK_ERROR'
+                );
+            }
+        });
+    }
+
+    async removePlayer(playerId) {
+        await this.ensureAuthenticated();
+        await this.rateLimiter.checkLimit(`remove-${playerId}`);
+        
+        return withRetry(async () => {
+            try {
+                return await this.actor.removePlayer(playerId);
+            } catch (error) {
+                throw new CrystalBankError(
+                    `Failed to remove player: ${error.message}`,
+                    'REMOVE_PLAYER_ERROR'
+                );
+            }
+        });
+    }
+
+    // Crystal Management Methods
     async depositCrystals(playerId, crystalType, amount) {
         await this.ensureAuthenticated();
+        await this.rateLimiter.checkLimit(`deposit-${playerId}`);
         
         if (!playerId || !crystalType || typeof amount !== 'number' || amount <= 0) {
             throw new ValidationError('Invalid parameters for crystal deposit');
@@ -202,10 +211,12 @@ class CrystalBankClient {
         return withRetry(async () => {
             try {
                 const result = await this.actor.depositCrystals(playerId, crystalType, amount);
-                console.log("Deposit successful:", result);
-                return result;
+                if ('ok' in result) {
+                    return result.ok;
+                } else {
+                    throw new Error(result.err);
+                }
             } catch (error) {
-                console.error("Error depositing crystals:", error);
                 throw new CrystalBankError(
                     `Failed to deposit crystals: ${error.message}`,
                     'DEPOSIT_ERROR'
@@ -214,29 +225,159 @@ class CrystalBankClient {
         });
     }
 
-    /**
-     * Convert crystals to FUDDY tokens
-     * @param {string} playerId - Unique identifier for the player
-     * @returns {Promise<any>}
-     */
-    @rateLimit(CONFIG.RATE_LIMIT.windowMs, CONFIG.RATE_LIMIT.maxRequests)
     async convertCrystalsToFUDDY(playerId) {
         await this.ensureAuthenticated();
+        await this.rateLimiter.checkLimit(`convert-crystals-${playerId}`);
         
-        if (!playerId) {
-            throw new ValidationError('Invalid playerId provided');
+        return withRetry(async () => {
+            try {
+                const result = await this.actor.convertCrystalsToFUDDY(playerId);
+                if ('ok' in result) {
+                    return result.ok;
+                } else {
+                    throw new Error(result.err);
+                }
+            } catch (error) {
+                throw new CrystalBankError(
+                    `Failed to convert crystals to FUDDY: ${error.message}`,
+                    'CONVERSION_ERROR'
+                );
+            }
+        });
+    }
+
+    // FUDDY Management Methods
+    async transferFUDDY(fromPlayerId, toPlayerId, amount) {
+        await this.ensureAuthenticated();
+        await this.rateLimiter.checkLimit(`transfer-${fromPlayerId}`);
+        
+        if (!fromPlayerId || !toPlayerId || typeof amount !== 'number' || amount <= 0) {
+            throw new ValidationError('Invalid parameters for FUDDY transfer');
         }
 
         return withRetry(async () => {
             try {
-                const result = await this.actor.convertCrystalsToFUDDY(playerId);
-                console.log("Conversion successful:", result);
-                return result;
+                const result = await this.actor.transferFUDDY(fromPlayerId, toPlayerId, amount);
+                if ('ok' in result) {
+                    return result.ok;
+                } else {
+                    throw new Error(result.err);
+                }
             } catch (error) {
-                console.error("Error converting crystals:", error);
                 throw new CrystalBankError(
-                    `Failed to convert crystals: ${error.message}`,
-                    'CONVERSION_ERROR'
+                    `Failed to transfer FUDDY: ${error.message}`,
+                    'TRANSFER_ERROR'
+                );
+            }
+        });
+    }
+
+    async getBalance(playerId) {
+        await this.ensureAuthenticated();
+        await this.rateLimiter.checkLimit(`balance-${playerId}`);
+        
+        return withRetry(async () => {
+            try {
+                return await this.actor.getBalance(playerId);
+            } catch (error) {
+                throw new CrystalBankError(
+                    `Failed to get balance: ${error.message}`,
+                    'BALANCE_ERROR'
+                );
+            }
+        });
+    }
+
+    async buyFUDDY(playerId, amount) {
+        await this.ensureAuthenticated();
+        await this.rateLimiter.checkLimit(`buy-${playerId}`);
+        
+        if (!playerId || typeof amount !== 'number' || amount <= 0) {
+            throw new ValidationError('Invalid parameters for FUDDY purchase');
+        }
+
+        return withRetry(async () => {
+            try {
+                const result = await this.actor.buyFUDDY(playerId, amount);
+                if ('ok' in result) {
+                    return result.ok;
+                } else {
+                    throw new Error(result.err);
+                }
+            } catch (error) {
+                throw new CrystalBankError(
+                    `Failed to buy FUDDY: ${error.message}`,
+                    'PURCHASE_ERROR'
+                );
+            }
+        });
+    }
+
+    // Transaction History Methods
+    async getTransactionHistory() {
+        await this.ensureAuthenticated();
+        await this.rateLimiter.checkLimit('transaction-history');
+        
+        return withRetry(async () => {
+            try {
+                return await this.actor.getTransactionHistory();
+            } catch (error) {
+                throw new CrystalBankError(
+                    `Failed to get transaction history: ${error.message}`,
+                    'HISTORY_ERROR'
+                );
+            }
+        });
+    }
+
+    async getPlayerTransactions(playerId) {
+        await this.ensureAuthenticated();
+        await this.rateLimiter.checkLimit(`player-transactions-${playerId}`);
+        
+        return withRetry(async () => {
+            try {
+                return await this.actor.getPlayerTransactions(playerId);
+            } catch (error) {
+                throw new CrystalBankError(
+                    `Failed to get player transactions: ${error.message}`,
+                    'PLAYER_HISTORY_ERROR'
+                );
+            }
+        });
+    }
+
+    // Economic Management Methods
+    async updateConversionRate(crystalType, newRate) {
+        await this.ensureAuthenticated();
+        await this.rateLimiter.checkLimit(`update-rate-${crystalType}`);
+        
+        if (!crystalType || typeof newRate !== 'number' || newRate <= 0) {
+            throw new ValidationError('Invalid parameters for conversion rate update');
+        }
+
+        return withRetry(async () => {
+            try {
+                return await this.actor.updateConversionRate(crystalType, newRate);
+            } catch (error) {
+                throw new CrystalBankError(
+                    `Failed to update conversion rate: ${error.message}`,
+                    'RATE_UPDATE_ERROR'
+                );
+            }
+        });
+    }
+
+    async getCurrentConversionRates() {
+        await this.ensureAuthenticated();
+        await this.rateLimiter.checkLimit('conversion-rates');
+        
+        return withRetry(async () => {
+            try {
+                return await this.actor.getCurrentConversionRates();
+            } catch (error) {
+                throw new CrystalBankError(
+                    `Failed to get conversion rates: ${error.message}`,
+                    'RATE_FETCH_ERROR'
                 );
             }
         });
@@ -252,29 +393,3 @@ export {
     ValidationError,
     AuthenticationError
 };
-
-// Example usage
-/*
-const example = async () => {
-    try {
-        await crystalBankClient.initialize();
-        await crystalBankClient.login();
-
-        await crystalBankClient.registerPlayer("player1");
-        await crystalBankClient.depositCrystals("player1", "Type1", 10);
-        await crystalBankClient.convertCrystalsToFUDDY("player1");
-
-        await crystalBankClient.logout();
-    } catch (error) {
-        if (error instanceof AuthenticationError) {
-            console.error("Authentication failed:", error);
-        } else if (error instanceof ValidationError) {
-            console.error("Invalid input:", error);
-        } else if (error instanceof CrystalBankError) {
-            console.error("Operation failed:", error);
-        } else {
-            console.error("Unexpected error:", error);
-        }
-    }
-};
-*/
