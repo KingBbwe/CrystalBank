@@ -10,29 +10,32 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Check out the code
+      # Step 1: Check out the repository
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # Step 2: Install DFINITY SDK (dfx)
-      - name: Install DFX
+      # Step 2: Install DFX
+      - name: Install DFINITY SDK (dfx)
         run: |
           mkdir -p "$HOME/bin"
-          curl -L https://internetcomputer.org/install.sh | bash
+          curl -L https://github.com/dfinity/sdk/releases/latest/download/dfx-x86_64-linux.tar.gz -o dfx.tar.gz
+          tar -xvzf dfx.tar.gz -C "$HOME/bin"
+          rm dfx.tar.gz
           echo "$HOME/bin" >> $GITHUB_PATH
-          dfx --version
+          "$HOME/bin/dfx" --version
 
       # Step 3: Authenticate with Identity
       - name: Authenticate with Identity
         run: |
           echo "${{ secrets.DFX_IDENTITY }}" > identity.pem
-          dfx identity import --force github_identity < identity.pem
-          dfx identity use github_identity
+          "$HOME/bin/dfx" identity import --force github_identity < identity.pem
+          "$HOME/bin/dfx" identity use github_identity
         env:
           DFX_IDENTITY: ${{ secrets.DFX_IDENTITY }}
 
-      # Step 4: Start DFX and Deploy Canisters
+      # Step 4: Deploy Canisters
       - name: Deploy Canisters
         run: |
-          dfx build
-          dfx deploy --network ic
+          "$HOME/bin/dfx" build
+          "$HOME/bin/dfx" deploy --network ic
+
