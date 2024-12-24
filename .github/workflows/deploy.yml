@@ -18,9 +18,7 @@ jobs:
       - name: Install DFINITY SDK (dfx)
         run: |
           mkdir -p "$HOME/bin"
-          curl -L https://github.com/dfinity/sdk/releases/download/0.13.1/dfx-x86_64-linux.tar.gz -o dfx.tar.gz
-          tar -xzf dfx.tar.gz -C "$HOME/bin"
-          rm dfx.tar.gz
+          curl -fsSL https://internetcomputer.org/install.sh | bash
           echo "$HOME/bin" >> $GITHUB_PATH
           "$HOME/bin/dfx" --version
 
