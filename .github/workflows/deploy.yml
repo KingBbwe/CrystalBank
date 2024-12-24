@@ -20,8 +20,9 @@ jobs:
           DFX_VERSION: "0.13.1" # Replace with the required version
           NONINTERACTIVE: "1"   # Skips any prompts or terminal interaction
         run: |
+          set -eu  # Exit immediately if a command exits with a non-zero status
           mkdir -p "$HOME/bin"
-          curl -fsSL https://internetcomputer.org/install.sh | bash -s -- --skip-path-munge
+          curl -fsSL https://internetcomputer.org/install.sh | bash -s -- --skip-path-munge --non-interactive
           echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
           "$HOME/.local/share/dfx/bin/dfx" --version
 
