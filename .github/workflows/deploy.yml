@@ -14,12 +14,12 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # Step 2: Install DFX
+      # Step 2: Install DFINITY SDK (dfx)
       - name: Install DFINITY SDK (dfx)
         run: |
           mkdir -p "$HOME/bin"
-          curl -L https://github.com/dfinity/sdk/releases/latest/download/dfx-x86_64-linux.tar.gz -o dfx.tar.gz
-          tar -xvzf dfx.tar.gz -C "$HOME/bin"
+          curl -L https://github.com/dfinity/sdk/releases/download/0.13.1/dfx-x86_64-linux.tar.gz -o dfx.tar.gz
+          tar -xzf dfx.tar.gz -C "$HOME/bin"
           rm dfx.tar.gz
           echo "$HOME/bin" >> $GITHUB_PATH
           "$HOME/bin/dfx" --version
@@ -33,9 +33,8 @@ jobs:
         env:
           DFX_IDENTITY: ${{ secrets.DFX_IDENTITY }}
 
-      # Step 4: Deploy Canisters
-      - name: Deploy Canisters
+      # Step 4: Build and Deploy Canisters
+      - name: Build and Deploy Canisters
         run: |
           "$HOME/bin/dfx" build
           "$HOME/bin/dfx" deploy --network ic
-
