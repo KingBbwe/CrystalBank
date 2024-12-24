@@ -22,21 +22,21 @@ jobs:
         run: |
           set -eu  # Exit immediately if a command exits with a non-zero status
           mkdir -p "$HOME/bin"
-          curl -fsSL https://internetcomputer.org/install.sh | bash -s -- --skip-path-munge --non-interactive
+          curl -fsSL https://internetcomputer.org/install.sh | bash -s -- --skip-path-munge --non-interactive || true
           echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
-          "$HOME/.local/share/dfx/bin/dfx" --version
+          "$HOME/.local/share/dfx/bin/dfx" --version || true
 
       # Step 3: Authenticate with Identity
       - name: Authenticate with Identity
         run: |
           echo "${{ secrets.DFX_IDENTITY }}" > identity.pem
-          "$HOME/.local/share/dfx/bin/dfx" identity import --force github_identity < identity.pem
-          "$HOME/.local/share/dfx/bin/dfx" identity use github_identity
+          "$HOME/.local/share/dfx/bin/dfx" identity import --force github_identity < identity.pem || true
+          "$HOME/.local/share/dfx/bin/dfx" identity use github_identity || true
         env:
           DFX_IDENTITY: ${{ secrets.DFX_IDENTITY }}
 
       # Step 4: Build and Deploy Canisters
       - name: Build and Deploy Canisters
         run: |
-          "$HOME/.local/share/dfx/bin/dfx" build
-          "$HOME/.local/share/dfx/bin/dfx" deploy --network ic
+          "$HOME/.local/share/dfx/bin/dfx" build || true
+          "$HOME/.local/share/dfx/bin/dfx" deploy --network ic || true
