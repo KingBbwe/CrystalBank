@@ -1,35 +1,63 @@
 {
   "canisters": {
-    "CrystalBank": {
-      "main": "src/backend/CrystalBank.mo",
-      "type": "motoko", 
-      "candid": "src/backend/CrystalBank.did" 
+    "game_coordinator": {
+      "main": "src/backend/coordinators/GameCoordinator.mo",
+      "type": "motoko",
+      "dependencies": [
+        "crystal_bank",
+        "game_authenticator",
+        "hybrid_wallet",
+        "liquidity_pool",
+        "macro_manager",
+        "market_interaction",
+        "nft_types",
+        "user_types"
+      ]
     },
-    "frontend": {
-      "source": ["frontend/src"],
-      "main": "frontend/dist",
-      "type": "assets"
-    },
-    "MacroManager": {
-      "main": "src/MacroManager/main.mo",
+    "crystal_bank": {
+      "main": "src/backend/modules/CrystalBank.mo",
       "type": "motoko"
-    }
-  },
-  "networks": {
-    "local": {
-      "bind": "127.0.0.1:8000", 
-      "type": "ephemeral" 
     },
-    "ic": {
-      "providers": ["https://ic0.app"],
-      "type": "persistent" 
+    "game_authenticator": {
+      "main": "src/backend/modules/GameAuthenticator.mo",
+      "type": "motoko"
+    },
+    "hybrid_wallet": {
+      "main": "src/backend/modules/HybridWallet.mo",
+      "type": "motoko"
+    },
+    "liquidity_pool": {
+      "main": "src/backend/modules/LiquidityPool.mo",
+      "type": "motoko"
+    },
+    "macro_manager": {
+      "main": "src/backend/modules/MacroManager.mo",
+      "type": "motoko"
+    },
+    "market_interaction": {
+      "main": "src/backend/modules/MarketInteraction.mo",
+      "type": "motoko"
+    },
+    "nft_types": {
+      "main": "src/backend/types/NFTTypes.mo",
+      "type": "motoko"
+    },
+    "user_types": {
+      "main": "src/backend/types/UserTypes.mo",
+      "type": "motoko"
     }
   },
   "defaults": {
     "build": {
-      "output": "dist"
-    },
-    "network": "local"
+      "packtool": "vessel sources",
+      "args": ""
+    }
+  },
+  "networks": {
+    "local": {
+      "bind": "127.0.0.1:8000",
+      "type": "ephemeral"
+    }
   },
   "version": 1
 }
