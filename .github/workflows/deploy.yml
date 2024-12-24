@@ -44,6 +44,7 @@ jobs:
       # Step 5: Retrieve Canister IDs and Save to File
       - name: Retrieve Canister IDs
         run: |
+          cd path/to/your/project/directory  # Change this to your actual project path
           "$HOME/.local/share/dfx/bin/dfx" canister id > canister_ids.txt || true
           cat canister_ids.txt  # Display canister IDs in logs
 
