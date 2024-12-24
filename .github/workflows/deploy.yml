@@ -41,7 +41,15 @@ jobs:
           "$HOME/.local/share/dfx/bin/dfx" build || true
           "$HOME/.local/share/dfx/bin/dfx" deploy --network ic || true
 
-      # Step 5: Retrieve Canister IDs
+      # Step 5: Retrieve Canister IDs and Save to File
       - name: Retrieve Canister IDs
         run: |
-          "$HOME/.local/share/dfx/bin/dfx" canister id || true
+          "$HOME/.local/share/dfx/bin/dfx" canister id > canister_ids.txt || true
+          cat canister_ids.txt  # Display canister IDs in logs
+
+      # Step 6: Upload Canister IDs as an Artifact (optional)
+      - name: Upload Canister IDs Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: canister-ids
+          path: canister_ids.txt
