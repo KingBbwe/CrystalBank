@@ -14,12 +14,14 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # Step 2: Install DFINITY SDK (dfx) with a Specific Version
+      # Step 2: Install DFINITY SDK (dfx) Non-Interactively
       - name: Install DFINITY SDK (dfx)
+        env:
+          DFX_VERSION: "0.13.1" # Replace with the required version
+          NONINTERACTIVE: "1"   # Skips any prompts or terminal interaction
         run: |
-          export DFX_VERSION=0.13.1
           mkdir -p "$HOME/bin"
-          curl -fsSL https://internetcomputer.org/install.sh | bash -s -- --dfx-version $DFX_VERSION
+          curl -fsSL https://internetcomputer.org/install.sh | bash -s -- --skip-path-munge
           echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
           "$HOME/.local/share/dfx/bin/dfx" --version
 
