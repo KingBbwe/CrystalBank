@@ -43,35 +43,21 @@ actor MacroManager {
     // Detailed Economic Activity Logging
 
     type EconomicActivity = {
-
         Timestamp : Time.Time;
-
         activityType : ActivityType;
-
         amount : Nat;
-
         counterparty : ?Principal;
-
         notes : ?Text;
-
     };
 
-
-
     // Conversion and Transfer Policies
-
     type ConversionPolicy = {
-
         minRealFuddyForConversion : Nat;
-
         conversionFeePercentage : Float;
-
         dailyTransferLimit : Nat;
-
     };
 
     // Governance and Economic Parameters
-
     private stable var conversionPolicy : ConversionPolicy = {
         minRealFuddyForConversion = 100_000; // 100 $FUDDY minimum
         conversionFeePercentage = 0.05; // 5% conversion fee
@@ -89,6 +75,14 @@ actor MacroManager {
     private stable var systemReserveRealFuddy : Nat = 0;
     private stable var totalCirculatingRealFuddy : Nat = 0;
     private stable var totalCirculatingInGameFuddy : Nat = 0;
+
+    public shared func floatToNat(floatValue: Float): async ?Nat {
+        let intValue: Int = Float.toInt(floatValue); // Convert Float to Int
+        if (intValue >= 0) {
+            return ?(Int.abs(intValue)); // Safely convert non-negative Int to Nat
+        };
+        null; // Return null for negative values
+    };
 
     // Transfer Real $FUDDY Between Accounts
     public shared(msg) func transferRealFuddy(
@@ -117,37 +111,23 @@ actor MacroManager {
             return #err("Daily transfer limit exceeded");
         };
 
-
-
         // Perform transfer
-
         let updatedSenderProfile : AccountProfile = {
-
             senderProfile with realFuddyBalance = senderProfile.realFuddyBalance - amount;
-
             activityHistory = Array.append(
-
                 senderProfile.activityHistory, 
-
                 [_createEconomicActivity(
                     #Transfer, 
                     amount, 
                     ?recipient, 
                     "Real $FUDDY Transfer to " # debug_show(recipient)
                 )]
-
             )
-
         };
 
-
-
         let updatedRecipientProfile : AccountProfile = {
-
             recipientProfile with 
-
             realFuddyBalance = recipientProfile.realFuddyBalance + amount;
-
             activityHistory = Array.append(
                 recipientProfile.activityHistory, 
                 [_createEconomicActivity(
@@ -158,27 +138,14 @@ actor MacroManager {
                 )]
             )
         };
-
-
-
         accountProfiles.put(sender, updatedSenderProfile);
-
         accountProfiles.put(recipient, updatedRecipientProfile);
-
-
-
         #ok("Transfer Successful")
-
     };
 
-
-
     // Convert In-Game FUDDY to Real $FUDDY
-
     public shared(msg) func convertToRealFuddy(
-
         amount : Nat
-
     ) : async Result.Result<Text, Text> {
         let caller = msg.caller;
         // Validate account
@@ -197,92 +164,59 @@ actor MacroManager {
         };
 
         // Calculate conversion with fee
-        let conversionFee = Float.toInt(Float.fromInt(amount) * conversionPolicy.conversionFeePercentage);
+        let conversionFee = Int.abs(Float.toInt(Float.fromInt(amount) * conversionPolicy.conversionFeePercentage));
         let netConversionAmount = amount - conversionFee;
 
         // Update account balances
         let updatedProfile : AccountProfile = {
-            accountProfile with inGameFuddyBalance = Nat.sub(accountProfile.inGameFuddyBalance, amount);
+            accountProfile with inGameFuddyBalance = accountProfile.inGameFuddyBalance - amount; 
             realFuddyBalance = accountProfile.realFuddyBalance + netConversionAmount;
             activityHistory = Array.append(
-                accountProfile.activityHistory, 
+                accountProfile.activityHistory,
                 [_createEconomicActivity(
                     #Conversion, 
                     amount, 
                     null, 
                     "Conversion to Real $FUDDY with fee"
                 )]
-            )
+            );
         };
 
         // Update system reserves
-        systemReserveRealFuddy += Nat.fromInt(conversionFee);
-        totalCirculatingRealFuddy += Nat.fromInt(netConversionAmount);
+        systemReserveRealFuddy += conversionFee;
+        totalCirculatingRealFuddy += netConversionAmount;
         totalCirculatingInGameFuddy -= amount;
         accountProfiles.put(caller, updatedProfile);
         #ok("Conversion Successful")
     };
 
     // Advanced Economic Health Check
-
     public query func getEconomicHealthIndicators() : async {
-
         totalRealFuddy : Nat;
-
         totalInGameFuddy : Nat;
-
         systemReserve : Nat;
-
         averageBehaviorScore : Float;
-
     } {
-
         let behaviorScores = Buffer.Buffer<Float>(accountProfiles.size());
-
-        
-
         for ((_, profile) in accountProfiles.entries()) {
-
             behaviorScores.add(profile.behaviorScore);
-
         };
-
-
-
         {
-
             totalRealFuddy = totalCirculatingRealFuddy;
-
             totalInGameFuddy = totalCirculatingInGameFuddy;
-
             systemReserve = systemReserveRealFuddy;
-
             averageBehaviorScore = _calculateAverageBehaviorScore(behaviorScores);
-
         }
-
     };
-
-
-
     // Penalty and Reward Mechanism
-
-    public shared(msg) func adjustAccountBehaviorScore(
-
-        targetAccount : Principal,
-
-        adjustmentType : {#Reward; #Penalty},
-
-        amount : Float
-
-    ) : async Result.Result<Text, Text> {
-
+    public shared(msg) func adjustAccountBehaviorScore(targetAccount : Principal, adjustmentType : {#Reward; #Penalty}, amount : Float)
+      : async Result.Result<Text, Text> {
         let adminCaller = msg.caller;
         // Ensure only GMs can adjust scores
         let ?callerProfile = accountProfiles.get(adminCaller)
             else return #err("Unauthorized");
 
-        if (callerProfile.role != #GM) {
+        if (callerProfile.Role != #GM) {
             return #err("Only Game Masters can adjust behavior scores");
         };
 
@@ -300,13 +234,15 @@ actor MacroManager {
             targetProfile with behaviorScore = finalScore;
             activityHistory = Array.append(
                 targetProfile.activityHistory, 
-
                 [_createEconomicActivity(
                     switch (adjustmentType) {
                         case (#Reward) #Reward;
                         case (#Penalty) #Penalty;
                     }, 
-                    Nat.fromInt(amount), 
+                    switch (await floatToNat(amount)) {
+                        case (?natAmount) natAmount;
+                        case (null) 0;
+                    },
                     ?adminCaller, 
                     "Behavior Score Adjustment"
                 )]
@@ -332,16 +268,12 @@ actor MacroManager {
         }
     };
 
-    private func calculateDailyTransferTotal(
-        Account : Principal
-    ) : Nat {
+    private func calculateDailyTransferTotal(Account : Principal) : Nat {
         // Calculate total transfers in last 24 hours
         0 // Placeholder – would implement full time-based calculation
     };
 
-    private func _calculateAverageBehaviorScore(
-        scores : Buffer.Buffer<Float>
-    ) : Float {
+    private func _calculateAverageBehaviorScore(scores : Buffer.Buffer<Float>) : Float {
         var total = 0.0;
         for (score in scores.vals()) {
             total += score;
@@ -349,3 +281,4 @@ actor MacroManager {
         total / Float.fromInt(scores.size())
     }
 }
+
