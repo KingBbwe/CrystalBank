@@ -18,29 +18,15 @@ jobs:
           mkdir -p "$HOME/bin"
           curl -L https://github.com/dfinity/dfx/releases/download/0.13.1/dfx-x86_64-unknown-linux-gnu.tar.gz | tar xz -C "$HOME/bin"
           echo "$HOME/bin" >> $GITHUB_PATH
-          dfx --version || true
+          dfx --version
 
-      - name: Start Local Replica
+      - name: Authenticate with Identity
         run: |
-          dfx start --background && sleep 5
-          echo "Replica started successfully."
+          echo "${{ secrets.DFX_IDENTITY }}" > identity.pem
+          dfx identity import --force github_identity < identity.pem
+          dfx identity use github_identity
+        env:
+          DFX_IDENTITY: ${{ secrets.DFX_IDENTITY }}
 
-      - name: Build All Canisters
-        run: dfx build
-
-      - name: Deploy MacroManager
-        run: |
-          dfx deploy MacroManager || { echo "Deploy failed"; exit 1; }
-
-      - name: Get Canister ID
-        run: |
-          dfx canister id MacroManager > canister_id.txt || { echo "Failed to retrieve canister ID"; exit 1; }
-
-      - name: Upload Canister ID as Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: MacroManager_Canister_ID
-          path: canister_id.txt
-
-      - name: Clean Up
-        run: rm -f canister_id.txt
+      - name: Set IC Network
+        run: echo "network=ic" >> dfx.json
