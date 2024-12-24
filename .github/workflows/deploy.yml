@@ -3,7 +3,7 @@ name: Deploy Canisters
 on:
   push:
     branches:
-      - Pruned-Tree # Adjust this to the branch you want to deploy from
+      - main
 
 jobs:
   deploy:
@@ -18,7 +18,7 @@ jobs:
       - name: Install DFX
         run: |
           mkdir -p "$HOME/bin"
-          curl -L https://github.com/dfinity/sdk/releases/latest/download/dfx-linux-x86_64.tar.gz | tar -xzf - -C "$HOME/bin"
+          curl -L https://internetcomputer.org/install.sh | bash
           echo "$HOME/bin" >> $GITHUB_PATH
           dfx --version
 
