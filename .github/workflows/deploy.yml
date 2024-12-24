@@ -15,32 +15,32 @@ jobs:
 
       - name: Install DFX
         run: |
-          # Create the bin directory if it doesn't exist
           mkdir -p "$HOME/bin"
-          
-          # Download the latest DFX release tarball
-          curl -L https://github.com/dfinity/dfx/releases/latest/download/dfx-x86_64-unknown-linux-gnu.tar.gz | tar xz -C "$HOME/bin"
-          
-          # Add DFX to the PATH
+          curl -L https://github.com/dfinity/dfx/releases/download/0.13.1/dfx-x86_64-unknown-linux-gnu.tar.gz | tar xz -C "$HOME/bin"
           echo "$HOME/bin" >> $GITHUB_PATH
-          
-          # Verify installation
-          dfx --version || true  # Ignore version check failure for smooth execution
+          dfx --version || true
 
       - name: Start Local Replica
-        run: dfx start --background
+        run: |
+          dfx start --background && sleep 5
+          echo "Replica started successfully."
 
       - name: Build All Canisters
         run: dfx build
 
       - name: Deploy MacroManager
-        run: dfx deploy MacroManager
+        run: |
+          dfx deploy MacroManager || { echo "Deploy failed"; exit 1; }
 
       - name: Get Canister ID
-        run: dfx canister id MacroManager > canister_id.txt
+        run: |
+          dfx canister id MacroManager > canister_id.txt || { echo "Failed to retrieve canister ID"; exit 1; }
 
       - name: Upload Canister ID as Artifact
         uses: actions/upload-artifact@v3
         with:
           name: MacroManager_Canister_ID
           path: canister_id.txt
+
+      - name: Clean Up
+        run: rm -f canister_id.txt
