@@ -40,3 +40,8 @@ jobs:
         run: |
           "$HOME/.local/share/dfx/bin/dfx" build || true
           "$HOME/.local/share/dfx/bin/dfx" deploy --network ic || true
+
+      # Step 5: Retrieve Canister IDs
+      - name: Retrieve Canister IDs
+        run: |
+          "$HOME/.local/share/dfx/bin/dfx" canister id || true
