@@ -1,0 +1,23 @@
+type PlayerID = text;
+type WalletBalance = record {
+    inGameFuddy: nat;
+    realFuddy: nat;
+};
+
+type Result = variant {
+    ok: text;
+    err: text;
+};
+
+type Result_1 = variant {
+    ok: WalletBalance;
+    err: text;
+};
+
+service : {
+    convertToInGameFuddy: (PlayerID, nat) -> (Result);
+    depositRealFuddy: (PlayerID, nat) -> (Result);
+    getBalances: (PlayerID) -> (Result_1) query;
+    spendInGameFuddy: (PlayerID, nat) -> (Result);
+    transferRealFuddy: (PlayerID, PlayerID, nat) -> (Result);
+}
