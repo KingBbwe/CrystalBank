@@ -1,0 +1,19 @@
+name: Install Vessel Dependencies
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  vessel:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Install Vessel
+        run: |
+          npm install -g vessel
+          vessel install
