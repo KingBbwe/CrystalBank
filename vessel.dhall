@@ -6,5 +6,13 @@ in Prelude.default
       , repo = "https://github.com/dfinity/motoko-base"
       , version = "latest"
       }
+    , { name = "matchers"
+      , repo = "https://github.com/dfinity/motoko-matchers"
+      , version = "latest"
+      }
+    , { name = "ref"
+      , repo = "https://github.com/dfinity/motoko-ref"
+      , version = "latest"
+      }
     ]
   , compiler = Some "dfx"
