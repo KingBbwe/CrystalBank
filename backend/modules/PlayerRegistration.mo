@@ -1,31 +1,41 @@
+// PlayerRegistration.mo
 import HashSet "mo:base/HashSet";
+import Hash "mo:base/Hash";
+import Text "mo:base/Text";
 
-actor PlayerRegistration {
-    type PlayerID = Text;
+actor class PlayerRegistration() {
+    // Type definitions
+    public type PlayerID = Text;
 
-    stable var registeredPlayers: HashSet.HashSet<PlayerID> = HashSet.HashSet();
+    // Initialize the stable variable with explicit hash function
+    private let textHash: Text.Hash = Text.hash;
+    private stable var registeredPlayers: HashSet.HashSet<PlayerID> = HashSet.HashSet<PlayerID>(10, Text.equal, textHash);
 
-    public shared func registerPlayer(playerId: PlayerID): async Bool {
-        if (registeredPlayers.contains(playerId)) {
+    // Register a new player
+    public shared func registerPlayer(playerId: PlayerID) : async Bool {
+        if (registeredPlayers.has(playerId)) {
             return false; // Player already registered
         };
-        registeredPlayers.put(playerId);
+        registeredPlayers.add(playerId);
         return true;
     };
 
-    public shared func isRegistered(playerId: PlayerID): async Bool {
-        return registeredPlayers.contains(playerId);
+    // Check if a player is registered
+    public query func isRegistered(playerId: PlayerID) : async Bool {
+        registeredPlayers.has(playerId)
     };
 
-    public shared func removePlayer(playerId: PlayerID): async Bool {
-        if (not registeredPlayers.contains(playerId)) {
+    // Remove a player from registration
+    public shared func removePlayer(playerId: PlayerID) : async Bool {
+        if (not registeredPlayers.has(playerId)) {
             return false; // Player not found
         };
-        registeredPlayers.remove(playerId);
+        registeredPlayers.delete(playerId);
         return true;
     };
 
-    public shared func getRegisteredPlayers(): async [PlayerID] {
-        return registeredPlayers.toArray();
+    // Get all registered players
+    public query func getRegisteredPlayers() : async [PlayerID] {
+        HashSet.toArray(registeredPlayers)
     };
 };
