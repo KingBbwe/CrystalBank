@@ -14,25 +14,26 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # Step 2: Install DFINITY SDK (dfx)
+      # Step 2: Install DFINITY SDK (dfx) Non-Interactively
       - name: Install DFINITY SDK (dfx)
         run: |
+          export DFX_VERSION=latest
           mkdir -p "$HOME/bin"
           curl -fsSL https://internetcomputer.org/install.sh | bash
-          echo "$HOME/bin" >> $GITHUB_PATH
-          "$HOME/bin/dfx" --version
+          echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
+          "$HOME/.local/share/dfx/bin/dfx" --version
 
       # Step 3: Authenticate with Identity
       - name: Authenticate with Identity
         run: |
           echo "${{ secrets.DFX_IDENTITY }}" > identity.pem
-          "$HOME/bin/dfx" identity import --force github_identity < identity.pem
-          "$HOME/bin/dfx" identity use github_identity
+          "$HOME/.local/share/dfx/bin/dfx" identity import --force github_identity < identity.pem
+          "$HOME/.local/share/dfx/bin/dfx" identity use github_identity
         env:
           DFX_IDENTITY: ${{ secrets.DFX_IDENTITY }}
 
       # Step 4: Build and Deploy Canisters
       - name: Build and Deploy Canisters
         run: |
-          "$HOME/bin/dfx" build
-          "$HOME/bin/dfx" deploy --network ic
+          "$HOME/.local/share/dfx/bin/dfx" build
+          "$HOME/.local/share/dfx/bin/dfx" deploy --network ic
