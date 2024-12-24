@@ -1,25 +1,28 @@
-name: Deploy MacroManager Canister
+name: Deploy Canisters
 
 on:
   push:
     branches:
-      - UI-build
+      - Pruned-Tree # Adjust this to the branch you want to deploy from
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Check out the code
       - name: Checkout Repository
         uses: actions/checkout@v3
 
+      # Step 2: Install DFINITY SDK (dfx)
       - name: Install DFX
         run: |
           mkdir -p "$HOME/bin"
-          curl -L https://github.com/dfinity/dfx/releases/download/0.13.1/dfx-x86_64-unknown-linux-gnu.tar.gz | tar xz -C "$HOME/bin"
+          curl -L https://github.com/dfinity/sdk/releases/latest/download/dfx-linux-x86_64.tar.gz | tar -xzf - -C "$HOME/bin"
           echo "$HOME/bin" >> $GITHUB_PATH
           dfx --version
 
+      # Step 3: Authenticate with Identity
       - name: Authenticate with Identity
         run: |
           echo "${{ secrets.DFX_IDENTITY }}" > identity.pem
@@ -28,5 +31,8 @@ jobs:
         env:
           DFX_IDENTITY: ${{ secrets.DFX_IDENTITY }}
 
-      - name: Set IC Network
-        run: echo "network=ic" >> dfx.json
+      # Step 4: Start DFX and Deploy Canisters
+      - name: Deploy Canisters
+        run: |
+          dfx build
+          dfx deploy --network ic
