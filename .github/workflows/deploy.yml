@@ -29,10 +29,10 @@ jobs:
         env:
           DFX_IDENTITY: ${{ secrets.DFX_IDENTITY }}
 
-      # Step 4: Configure Wallet (replace <wallet_id> with your actual wallet ID)
+      # Step 4: Configure Wallet (replace <opyr4-skhvh-gls2k-m2khd-peng6-uye6p-qdade-dlbe5-76jlr-cwdnm-uqe> with your actual wallet ID)
       - name: Configure Wallet
         run: |
-          dfx identity set-wallet <opyr4-skhvh-gls2k-m2khd-peng6-uye6p-qdade-dlbe5-76jlr-cwdnm-uqe> --network ic || true  # Replace <wallet_id> with your actual wallet ID
+          dfx identity set-wallet <wallet_id> --network ic || true  # Replace <wallet_id> with your actual wallet ID
 
       # Step 5: Create Canisters
       - name: Create Canisters
@@ -83,9 +83,9 @@ jobs:
           echo "User Types ID:" >> canister_ids.txt 
           dfx canister id user_types >> canister_ids.txt || true
 
-      # Step 8: Upload Canister IDs as an Artifact (optional)
+      # Step 8: Upload Canister IDs as an Artifact using v4 of upload-artifact action
       - name: Upload Canister IDs Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4  # Updated to v4
         with:
           name: canister-ids
           path: canister_ids.txt  
