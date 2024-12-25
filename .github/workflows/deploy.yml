@@ -17,10 +17,10 @@ jobs:
       # Step 2: Install DFINITY SDK (dfx) Non-Interactively
       - name: Install DFINITY SDK (dfx)
         env:
-          DFX_VERSION: "0.13.1" # Replace with the required version
-          NONINTERACTIVE: "1"   # Skips any prompts or terminal interaction
+          DFX_VERSION: "0.13.1"
+          NONINTERACTIVE: "1"
         run: |
-          set -eu  # Exit immediately if a command exits with a non-zero status
+          set -eu 
           mkdir -p "$HOME/bin"
           curl -fsSL https://internetcomputer.org/install.sh | bash -s -- --skip-path-munge --non-interactive || true
           echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
@@ -28,6 +28,7 @@ jobs:
 
       # Step 3: Authenticate with Identity
       - name: Authenticate with Identity
+        working-directory: CrystalBank  # Set working directory for this step
         run: |
           echo "${{ secrets.DFX_IDENTITY }}" > identity.pem
           "$HOME/.local/share/dfx/bin/dfx" identity import --force github_identity < identity.pem || true
@@ -37,21 +38,21 @@ jobs:
 
       # Step 4: Build and Deploy Canisters
       - name: Build and Deploy Canisters
+        working-directory: CrystalBank  # Set working directory for this step
         run: |
-          cd CrystalBank  # Change to the directory where dfx.json is located
           "$HOME/.local/share/dfx/bin/dfx" build || true
           "$HOME/.local/share/dfx/bin/dfx" deploy --network ic || true
 
       # Step 5: Retrieve Canister IDs and Save to File
       - name: Retrieve Canister IDs
+        working-directory: CrystalBank  # Set working directory for this step
         run: |
-          cd CrystalBank  # Ensure you're in the correct directory again if needed
           "$HOME/.local/share/dfx/bin/dfx" canister id > canister_ids.txt || true
-          cat canister_ids.txt  # Display canister IDs in logs
+          cat canister_ids.txt  
 
       # Step 6: Upload Canister IDs as an Artifact (optional)
       - name: Upload Canister IDs Artifact
         uses: actions/upload-artifact@v3
         with:
           name: canister-ids
-          path: CrystalBank/canister_ids.txt  # Path to the saved canister IDs file
+          path: CrystalBank/canister_ids.txt  
