@@ -3,7 +3,7 @@ name: Deploy Canisters
 on:
   push:
     branches:
-      - Pruned-Tree
+      - main # Adjust to your deployment branch
 
 jobs:
   deploy:
@@ -20,19 +20,8 @@ jobs:
         with:
           dfx-version: "0.14.2" # Specify the version you want, or use "latest"
 
-      # Step 3: Create and Use New Identity
-      - name: Create and Use New Identity
-        run: |
-          dfx identity new my_identity || true
-          dfx identity use my_identity || true
-
-      # Step 4: Configure Wallet (if applicable)
-      - name: Configure Wallet
-        run: |
-          dfx identity set-wallet <wallet_id> --network ic || true  # Replace <wallet_id> with your actual wallet ID
-
-      # Step 5: Authenticate with Identity
-      - name: Authenticate with Identity
+      # Step 3: Authenticate with Existing Identity
+      - name: Authenticate with Existing Identity
         run: |
           echo "${{ secrets.DFX_IDENTITY }}" > identity.pem
           dfx identity import --force github_identity < identity.pem || true
@@ -40,7 +29,12 @@ jobs:
         env:
           DFX_IDENTITY: ${{ secrets.DFX_IDENTITY }}
 
-      # Step 6: Create Canisters
+      # Step 4: Configure Wallet (replace <wallet_id> with your actual wallet ID)
+      - name: Configure Wallet
+        run: |
+          dfx identity set-wallet <opyr4-skhvh-gls2k-m2khd-peng6-uye6p-qdade-dlbe5-76jlr-cwdnm-uqe> --network ic || true  # Replace <wallet_id> with your actual wallet ID
+
+      # Step 5: Create Canisters
       - name: Create Canisters
         run: |
           dfx canister create game_coordinator || true
@@ -53,23 +47,43 @@ jobs:
           dfx canister create nft_types || true
           dfx canister create user_types || true
 
-      # Step 7: Build and Deploy Canisters
+      # Step 6: Build and Deploy Canisters
       - name: Build and Deploy Canisters
         run: |
           dfx build || true
           dfx deploy --network ic || true
 
-      # Step 8: Retrieve Canister IDs and Save to File
+      # Step 7: Retrieve Canister IDs and Save to File
       - name: Retrieve Canister IDs
         run: |
-          dfx canister id game_coordinator > canister_ids.txt || true
-          echo "Game Coordinator ID:" >> canister_ids.txt 
-          cat canister_ids.txt  
-          
+          echo "Game Coordinator ID:" > canister_ids.txt 
+          dfx canister id game_coordinator >> canister_ids.txt || true
+
           echo "Crystal Bank ID:" >> canister_ids.txt 
           dfx canister id crystal_bank >> canister_ids.txt || true
 
-      # Step 9: Upload Canister IDs as an Artifact (optional)
+          echo "Game Authenticator ID:" >> canister_ids.txt 
+          dfx canister id game_authenticator >> canister_ids.txt || true
+
+          echo "Hybrid Wallet ID:" >> canister_ids.txt 
+          dfx canister id hybrid_wallet >> canister_ids.txt || true
+
+          echo "Liquidity Pool ID:" >> canister_ids.txt 
+          dfx canister id liquidity_pool >> canister_ids.txt || true
+
+          echo "Macro Manager ID:" >> canister_ids.txt 
+          dfx canister id macro_manager >> canister_ids.txt || true
+
+          echo "Market Interaction ID:" >> canister_ids.txt 
+          dfx canister id market_interaction >> canister_ids.txt || true
+
+          echo "NFT Types ID:" >> canister_ids.txt 
+          dfx canister id nft_types >> canister_ids.txt || true
+
+          echo "User Types ID:" >> canister_ids.txt 
+          dfx canister id user_types >> canister_ids.txt || true
+
+      # Step 8: Upload Canister IDs as an Artifact (optional)
       - name: Upload Canister IDs Artifact
         uses: actions/upload-artifact@v3
         with:
