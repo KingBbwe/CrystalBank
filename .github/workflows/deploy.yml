@@ -38,13 +38,14 @@ jobs:
       # Step 4: Build and Deploy Canisters
       - name: Build and Deploy Canisters
         run: |
+          cd CrystalBank  # Change to the directory where dfx.json is located
           "$HOME/.local/share/dfx/bin/dfx" build || true
           "$HOME/.local/share/dfx/bin/dfx" deploy --network ic || true
 
       # Step 5: Retrieve Canister IDs and Save to File
       - name: Retrieve Canister IDs
         run: |
-          cd path/to/your/project/directory  # Change this to your actual project path
+          cd CrystalBank  # Ensure you're in the correct directory again if needed
           "$HOME/.local/share/dfx/bin/dfx" canister id > canister_ids.txt || true
           cat canister_ids.txt  # Display canister IDs in logs
 
@@ -53,4 +54,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: canister-ids
-          path: canister_ids.txt
+          path: CrystalBank/canister_ids.txt  # Path to the saved canister IDs file
