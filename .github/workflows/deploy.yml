@@ -3,7 +3,7 @@ name: Deploy Canisters
 on:
   push:
     branches:
-      - Pruned-Tree
+      - main # Adjust to your deployment branch
 
 jobs:
   deploy:
@@ -28,7 +28,6 @@ jobs:
 
       # Step 3: Authenticate with Identity
       - name: Authenticate with Identity
-        working-directory: CrystalBank  # Set working directory for this step
         run: |
           echo "${{ secrets.DFX_IDENTITY }}" > identity.pem
           "$HOME/.local/share/dfx/bin/dfx" identity import --force github_identity < identity.pem || true
@@ -38,14 +37,12 @@ jobs:
 
       # Step 4: Build and Deploy Canisters
       - name: Build and Deploy Canisters
-        working-directory: CrystalBank  # Set working directory for this step
         run: |
           "$HOME/.local/share/dfx/bin/dfx" build || true
           "$HOME/.local/share/dfx/bin/dfx" deploy --network ic || true
 
       # Step 5: Retrieve Canister IDs and Save to File
       - name: Retrieve Canister IDs
-        working-directory: CrystalBank  # Set working directory for this step
         run: |
           "$HOME/.local/share/dfx/bin/dfx" canister id > canister_ids.txt || true
           cat canister_ids.txt  
@@ -55,4 +52,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: canister-ids
-          path: CrystalBank/canister_ids.txt  
+          path: canister_ids.txt  
