@@ -17,10 +17,10 @@ jobs:
       # Step 2: Install DFINITY SDK (dfx) Non-Interactively
       - name: Install DFINITY SDK (dfx)
         env:
-          DFX_VERSION: "0.13.1"
-          NONINTERACTIVE: "1"
+          DFX_VERSION: "0.13.1" # Replace with the required version
+          NONINTERACTIVE: "1"   # Skips any prompts or terminal interaction
         run: |
-          set -eu 
+          set -eu  # Exit immediately if a command exits with a non-zero status
           mkdir -p "$HOME/bin"
           curl -fsSL https://internetcomputer.org/install.sh | bash -s -- --skip-path-munge --non-interactive || true
           echo "$HOME/.local/share/dfx/bin" >> $GITHUB_PATH
