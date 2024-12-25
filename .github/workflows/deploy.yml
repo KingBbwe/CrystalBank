@@ -20,7 +20,18 @@ jobs:
         with:
           dfx-version: "0.14.2" # Specify the version you want, or use "latest"
 
-      # Step 3: Authenticate with Identity
+      # Step 3: Create and Use New Identity
+      - name: Create and Use New Identity
+        run: |
+          dfx identity new my_identity || true
+          dfx identity use my_identity || true
+
+      # Step 4: Configure Wallet (if applicable)
+      - name: Configure Wallet
+        run: |
+          dfx identity set-wallet <wallet_id> --network ic || true  # Replace <wallet_id> with your actual wallet ID
+
+      # Step 5: Authenticate with Identity
       - name: Authenticate with Identity
         run: |
           echo "${{ secrets.DFX_IDENTITY }}" > identity.pem
@@ -29,19 +40,36 @@ jobs:
         env:
           DFX_IDENTITY: ${{ secrets.DFX_IDENTITY }}
 
-      # Step 4: Build and Deploy Canisters
+      # Step 6: Create Canisters
+      - name: Create Canisters
+        run: |
+          dfx canister create game_coordinator || true
+          dfx canister create crystal_bank || true
+          dfx canister create game_authenticator || true
+          dfx canister create hybrid_wallet || true
+          dfx canister create liquidity_pool || true
+          dfx canister create macro_manager || true
+          dfx canister create market_interaction || true
+          dfx canister create nft_types || true
+          dfx canister create user_types || true
+
+      # Step 7: Build and Deploy Canisters
       - name: Build and Deploy Canisters
         run: |
           dfx build || true
           dfx deploy --network ic || true
 
-      # Step 5: Retrieve Canister IDs and Save to File
+      # Step 8: Retrieve Canister IDs and Save to File
       - name: Retrieve Canister IDs
         run: |
-          dfx canister id > canister_ids.txt || true
+          dfx canister id game_coordinator > canister_ids.txt || true
+          echo "Game Coordinator ID:" >> canister_ids.txt 
           cat canister_ids.txt  
+          
+          echo "Crystal Bank ID:" >> canister_ids.txt 
+          dfx canister id crystal_bank >> canister_ids.txt || true
 
-      # Step 6: Upload Canister IDs as an Artifact (optional)
+      # Step 9: Upload Canister IDs as an Artifact (optional)
       - name: Upload Canister IDs Artifact
         uses: actions/upload-artifact@v3
         with:
