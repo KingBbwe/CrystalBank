@@ -3,7 +3,7 @@ name: Deploy Canisters
 on:
   push:
     branches:
-      - Prune-Tree
+      - Pruned-Tree
 
 jobs:
   deploy:
