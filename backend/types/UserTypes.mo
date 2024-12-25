@@ -1,7 +1,8 @@
+import Text "mo:base/Text";
+import Time "mo:base/Time";
+import Principal "mo:base/Principal";
+
 module {
-    import Text "mo:base/Text";
-    import Time "mo:base/Time";
-    import Principal "mo:base/Principal";
 
     // Account Tiers
     public type AccountTier = {
