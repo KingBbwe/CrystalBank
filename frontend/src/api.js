@@ -1,20 +1,26 @@
 import { Actor, HttpAgent } from "@dfinity/agent";
 import { idlFactory as CrystalBankIDL } from "./declarations/CrystalBank";
+import { idlFactory as FuddyToCrystalConversionIDL } from "./declarations/FuddyToCrystalConversion";
 
 // Use the environment variable for the canister ID, defaulting to the local canister ID for development
-const canisterId = process.env.REACT_APP_CRYSTAL_BANK_CANISTER_ID || "rrkah-fqaaa-aaaaa-aaaaq-cai";
+const crystalBankCanisterId = process.env.REACT_APP_CRYSTAL_BANK_CANISTER_ID || "rrkah-fqaaa-aaaaa-aaaaq-cai";
+const fuddyToCrystalConversionCanisterId = process.env.REACT_APP_FUDDY_TO_CRYSTAL_CONVERSION_CANISTER_ID || "ryjl3-tyaaa-aaaaa-aaaba-cai";
 
 // Create a reusable actor for the Crystal Bank canister
-const createActor = (canisterId, options) => {
+const createActor = (canisterId, idl, options) => {
     const agent = new HttpAgent(options);
     if (process.env.NODE_ENV === "development") {
         agent.fetchRootKey(); // Fetch the root key for local development
     }
-    return Actor.createActor(CrystalBankIDL, { agent, canisterId });
+    return Actor.createActor(idl, { agent, canisterId });
 };
 
 // Create the actor for the local replica (or production if set)
-export const crystalBank = createActor(canisterId, {
+export const crystalBank = createActor(crystalBankCanisterId, CrystalBankIDL, {
+    host: process.env.NODE_ENV === "development" ? "http://localhost:8000" : "https://ic0.app",
+});
+
+export const fuddyToCrystalConversion = createActor(fuddyToCrystalConversionCanisterId, FuddyToCrystalConversionIDL, {
     host: process.env.NODE_ENV === "development" ? "http://localhost:8000" : "https://ic0.app",
 });
 
@@ -79,6 +85,34 @@ export const getBalance = async (playerId) => {
         return await crystalBank.getBalance(playerId);
     } catch (error) {
         console.error("Error fetching balance:", error);
+        throw error;
+    }
+};
+
+// New API functions for Fuddy to Crystal conversion
+export const convertFuddyToCrystals = async (playerId, crystalType, amount) => {
+    try {
+        return await fuddyToCrystalConversion.convertFuddyToCrystals(playerId, crystalType, amount);
+    } catch (error) {
+        console.error("Error converting FUDDY to crystals:", error);
+        throw error;
+    }
+};
+
+export const updateConversionRate = async (crystalType, newRate) => {
+    try {
+        return await fuddyToCrystalConversion.updateConversionRate(crystalType, newRate);
+    } catch (error) {
+        console.error("Error updating conversion rate:", error);
+        throw error;
+    }
+};
+
+export const getConversionRates = async () => {
+    try {
+        return await fuddyToCrystalConversion.getConversionRates();
+    } catch (error) {
+        console.error("Error fetching conversion rates:", error);
         throw error;
     }
 };
