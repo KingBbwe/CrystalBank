@@ -3,6 +3,7 @@ import HashMap "mo:base/HashMap";
 import Text "mo:base/Text";
 import Nat "mo:base/Nat";
 import Principal "mo:base/Principal";
+import Error "mo:base/Error";
 
 actor class CrystalTransfer(crystalBankId: Principal, gameCoordinatorId: Principal) {
     // Type definitions
@@ -16,13 +17,12 @@ actor class CrystalTransfer(crystalBankId: Principal, gameCoordinatorId: Princip
 
     // Actor references
     let crystalBank = actor(crystalBankId) : actor {
-        depositCrystals: (playerId: PlayerID, crystalType: Text, amount: Nat) -> async Result.Result<Text, Text>;
-        getBalance: (playerId: PlayerID) -> async Nat;
+        depositCrystals: (playerId: Text, crystalType: Text, amount: Nat) -> async Result.Result<Text, Text>;
     };
 
     let gameCoordinator = actor(gameCoordinatorId) : actor {
-        isPlayerRegistered: (playerId: PlayerID) -> async Bool;
-        getPlayerFullProfile: (playerId: PlayerID) -> async Result.Result<{
+        isPlayerRegistered: (playerId: Text) -> async Bool;
+        getPlayerFullProfile: (playerId: Text) -> async Result.Result<{
             profile: ?UserProfile;
             nfts: [NFT];
             balances: {
@@ -107,4 +107,4 @@ actor class CrystalTransfer(crystalBankId: Principal, gameCoordinatorId: Princip
             case (#ok(_)) return #ok("Distribution successful");
         };
     };
-};
+}
