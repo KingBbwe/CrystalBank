@@ -19,7 +19,9 @@ actor class GameCoordinator(
     hybridWalletId: Principal,
     liquidityPoolId: Principal,
     macroManagerId: Principal,
-    marketInteractionId: Principal
+    marketInteractionId: Principal,
+    crystalTransferId: Principal, // Add CrystalTransfer canister ID
+    fuddyManagementId: Principal  // Add FuddyManagement canister ID
 ) {
     // Type Definitions
     type AccountTier = {
@@ -59,6 +61,19 @@ actor class GameCoordinator(
         depositCrystals: (playerId: Text, crystalType: Text, amount: Nat) -> async Result.Result<Text, Text>;
         convertCrystalsToFUDDY: (playerId: Text) -> async Result.Result<Nat, Text>;
         transferFUDDY: (fromPlayerId: Text, toPlayerId: Text, amount: Nat) -> async Result.Result<Text, Text>;
+        getBalance: (playerId: Text) -> async Nat;
+    };
+
+    let crystalTransfer = actor(crystalTransferId) : actor {
+        transferCrystals: (fromPlayerId: Text, toPlayerId: Text, crystalType: CrystalType, amount: Nat) -> async Result.Result<Text, Text>;
+        distributeCrystals: (playerId: Text, crystalType: CrystalType, amount: Nat) -> async Result.Result<Text, Text>;
+    };
+
+    let fuddyManagement = actor(fuddyManagementId) : actor {
+        deposit: (playerId: Text, amount: Nat) -> async Result.Result<Text, Text>;
+        withdraw: (playerId: Text, amount: Nat) -> async Result.Result<Text, Text>;
+        transfer: (fromPlayerId: Text, toPlayerId: Text, amount: Nat) -> async Result.Result<Text, Text>;
+        convertToBlockchain: (playerId: Text, amount: Nat) -> async Result.Result<Text, Text>;
         getBalance: (playerId: Text) -> async Nat;
     };
 
@@ -201,6 +216,84 @@ actor class GameCoordinator(
             })
         } catch (error) {
             #err("Failed to fetch player profile: " # Error.message(error))
+        }
+    };
+
+    // Fuddy Management Functions
+    public shared func depositFuddy(playerId: Text, amount: Nat) : async Result.Result<Text, Text> {
+        if (not registeredPlayers.contains(playerId)) {
+            return #err("Player not registered");
+        };
+
+        try {
+            let result = await fuddyManagement.deposit(playerId, amount);
+            switch (result) {
+                case (#ok(_)) #ok("Deposit successful");
+                case (#err(e)) #err("Deposit failed: " # e);
+            }
+        } catch (error) {
+            #err("Deposit failed: " # Error.message(error))
+        }
+    };
+
+    public shared func withdrawFuddy(playerId: Text, amount: Nat) : async Result.Result<Text, Text> {
+        if (not registeredPlayers.contains(playerId)) {
+            return #err("Player not registered");
+        };
+
+        try {
+            let result = await fuddyManagement.withdraw(playerId, amount);
+            switch (result) {
+                case (#ok(_)) #ok("Withdrawal successful");
+                case (#err(e)) #err("Withdrawal failed: " # e);
+            }
+        } catch (error) {
+            #err("Withdrawal failed: " # Error.message(error))
+        }
+    };
+
+    public shared func transferFuddy(fromPlayerId: Text, toPlayerId: Text, amount: Nat) : async Result.Result<Text, Text> {
+        if (not registeredPlayers.contains(fromPlayerId) or not registeredPlayers.contains(toPlayerId)) {
+            return #err("One or both players are not registered");
+        };
+
+        try {
+            let result = await fuddyManagement.transfer(fromPlayerId, toPlayerId, amount);
+            switch (result) {
+                case (#ok(_)) #ok("Transfer successful");
+                case (#err(e)) #err("Transfer failed: " # e);
+            }
+        } catch (error) {
+            #err("Transfer failed: " # Error.message(error))
+        }
+    };
+
+    public shared func convertFuddyToBlockchain(playerId: Text, amount: Nat) : async Result.Result<Text, Text> {
+        if (not registeredPlayers.contains(playerId)) {
+            return #err("Player not registered");
+        };
+
+        try {
+            let result = await fuddyManagement.convertToBlockchain(playerId, amount);
+            switch (result) {
+                case (#ok(_)) #ok("Conversion successful");
+                case (#err(e)) #err("Conversion failed: " # e);
+            }
+        } catch (error) {
+            #err("Conversion failed: " # Error.message(error))
+        }
+    };
+
+    public shared query func getFuddyBalance(playerId: Text) : async Result.Result<Nat, Text> {
+        if (not registeredPlayers.contains(playerId)) {
+            return #err("Player not registered");
+        };
+
+        try {
+            let balance = await fuddyManagement.getBalance(playerId);
+            #ok(balance)
+        } catch (error) {
+            #err("Failed to fetch balance: " # Error.message(error))
         }
     };
 }
