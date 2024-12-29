@@ -1,85 +1,86 @@
 import React, { useState, useEffect } from 'react';
-import { getTransactionHistory } from '../api/crystalBank'; // Existing API for transaction history
-import { handleDepositCrystals, handleConvertToFUDDY } from '../api/fuddy'; // Modular functions
-import { hybridWallet } from '../api/hybridWallet'; // HybridWallet API for wallet interactions
+import GameCoordinator from '../api/GameCoordinator'; // Import the GameCoordinator API
 
 function PlayerDashboard() {
     const [playerId, setPlayerId] = useState('');
     const [crystalType, setCrystalType] = useState('');
     const [amount, setAmount] = useState(0);
-    const [history, setHistory] = useState([]);
-    const [walletBalances, setWalletBalances] = useState({ inGameFuddy: 0, realFuddy: 0 }); // Hybrid Wallet Balances
-    const [depositAmount, setDepositAmount] = useState(0); // Amount for real $FUDDY deposit
-    const [transferTarget, setTransferTarget] = useState(''); // Target player ID for transfer
-    const [transferAmount, setTransferAmount] = useState(0); // Amount to transfer real $FUDDY
+    const [transferTarget, setTransferTarget] = useState('');
+    const [transferAmount, setTransferAmount] = useState(0);
+    const [fuddyBalance, setFuddyBalance] = useState(0);
 
-    // Fetch wallet balances when playerId changes
+    // Fetch FUDDY balance when playerId changes
     useEffect(() => {
         if (playerId) {
-            const fetchBalances = async () => {
+            const fetchFuddyBalance = async () => {
                 try {
-                    const balances = await hybridWallet.getBalances(playerId);
-                    setWalletBalances(balances);
+                    const balance = await GameCoordinator.getFuddyBalance(playerId);
+                    setFuddyBalance(balance);
                 } catch (error) {
-                    console.error('Error fetching wallet balances:', error);
+                    console.error('Error fetching FUDDY balance:', error);
                 }
             };
-            fetchBalances();
+            fetchFuddyBalance();
         }
     }, [playerId]);
 
-    // Handle crystal deposits using the modularized function
-    const handleDepositCrystalsAction = async () => {
-        const result = await handleDepositCrystals(playerId, crystalType, amount);
-        alert(result);
-    };
-
-    // Handle FUDDY conversion with redundancy mechanism using the modularized function
-    const handleConvertToFUDDYAction = async () => {
-        const result = await handleConvertToFUDDY(playerId, amount, walletBalances.realFuddy);
-        alert(result);
-    };
-
-    // Fetch Transaction History
-    const handleFetchHistory = async () => {
-        const result = await getTransactionHistory(playerId);
-        setHistory(result || []);
-    };
-
-    // Deposit Real $FUDDY
-    const handleDepositRealFuddy = async () => {
+    // Handle crystal deposits
+    const handleDepositCrystals = async () => {
         try {
-            const result = await hybridWallet.depositRealFuddy(playerId, depositAmount);
-            if (result.ok) {
-                alert('Deposit successful');
-                setDepositAmount(0); // Reset input
-                // Refresh balances after deposit
-                const balances = await hybridWallet.getBalances(playerId);
-                setWalletBalances(balances);
-            } else {
-                alert(`Deposit failed: ${result.err}`);
-            }
+            const result = await GameCoordinator.depositCrystals(playerId, crystalType, amount);
+            alert(result);
         } catch (error) {
-            alert('Error during deposit: ' + error.message);
+            alert('Error depositing crystals: ' + error.message);
         }
     };
 
-    // Transfer Real $FUDDY
+    // Handle crystal transfers
+    const handleTransferCrystals = async () => {
+        try {
+            const result = await GameCoordinator.transferCrystals(playerId, transferTarget, crystalType, transferAmount);
+            alert(result);
+        } catch (error) {
+            alert('Error transferring crystals: ' + error.message);
+        }
+    };
+
+    // Handle FUDDY deposits
+    const handleDepositFuddy = async () => {
+        try {
+            const result = await GameCoordinator.depositFuddy(playerId, amount);
+            alert(result);
+        } catch (error) {
+            alert('Error depositing FUDDY: ' + error.message);
+        }
+    };
+
+    // Handle FUDDY withdrawals
+    const handleWithdrawFuddy = async () => {
+        try {
+            const result = await GameCoordinator.withdrawFuddy(playerId, amount);
+            alert(result);
+        } catch (error) {
+            alert('Error withdrawing FUDDY: ' + error.message);
+        }
+    };
+
+    // Handle FUDDY transfers
     const handleTransferFuddy = async () => {
         try {
-            const result = await hybridWallet.transferRealFuddy(playerId, transferTarget, transferAmount);
-            if (result.ok) {
-                alert("Transfer successful!");
-                setTransferTarget('');
-                setTransferAmount(0);
-                // Refresh balances after transfer
-                const balances = await hybridWallet.getBalances(playerId);
-                setWalletBalances(balances);
-            } else {
-                alert(`Transfer failed: ${result.err}`);
-            }
+            const result = await GameCoordinator.transferFuddy(playerId, transferTarget, transferAmount);
+            alert(result);
         } catch (error) {
-            alert("Error during transfer: " + error.message);
+            alert('Error transferring FUDDY: ' + error.message);
+        }
+    };
+
+    // Handle FUDDY to blockchain conversion
+    const handleConvertFuddyToBlockchain = async () => {
+        try {
+            const result = await GameCoordinator.convertFuddyToBlockchain(playerId, amount);
+            alert(result);
+        } catch (error) {
+            alert('Error converting FUDDY to blockchain: ' + error.message);
         }
     };
 
@@ -98,22 +99,70 @@ function PlayerDashboard() {
                 </label>
             </div>
             <div>
-                <h2>Hybrid Wallet Balances</h2>
-                <p>In-Game FUDDY: {walletBalances.inGameFuddy}</p>
-                <p>Real $FUDDY: {walletBalances.realFuddy}</p>
+                <h2>FUDDY Balance: {fuddyBalance}</h2>
             </div>
             <div>
-                <h2>Deposit Real $FUDDY</h2>
+                <h2>Deposit Crystals</h2>
+                <select onChange={(e) => setCrystalType(e.target.value)}>
+                    <option value="">Select Crystal Type</option>
+                    <option value="Type1">Type 1</option>
+                    <option value="Type2">Type 2</option>
+                    <option value="Type3">Type 3</option>
+                    <option value="Type4">Type 4</option>
+                </select>
                 <input
                     type="number"
-                    placeholder="Amount to deposit"
-                    value={depositAmount}
-                    onChange={(e) => setDepositAmount(Number(e.target.value))}
+                    placeholder="Amount"
+                    value={amount}
+                    onChange={(e) => setAmount(Number(e.target.value))}
                 />
-                <button onClick={handleDepositRealFuddy}>Deposit Real $FUDDY</button>
+                <button onClick={handleDepositCrystals}>Deposit</button>
             </div>
             <div>
-                <h2>Transfer Real $FUDDY</h2>
+                <h2>Transfer Crystals</h2>
+                <input
+                    type="text"
+                    placeholder="Target Player ID"
+                    value={transferTarget}
+                    onChange={(e) => setTransferTarget(e.target.value)}
+                />
+                <select onChange={(e) => setCrystalType(e.target.value)}>
+                    <option value="">Select Crystal Type</option>
+                    <option value="Type1">Type 1</option>
+                    <option value="Type2">Type 2</option>
+                    <option value="Type3">Type 3</option>
+                    <option value="Type4">Type 4</option>
+                </select>
+                <input
+                    type="number"
+                    placeholder="Amount"
+                    value={transferAmount}
+                    onChange={(e) => setTransferAmount(Number(e.target.value))}
+                />
+                <button onClick={handleTransferCrystals}>Transfer</button>
+            </div>
+            <div>
+                <h2>Deposit FUDDY</h2>
+                <input
+                    type="number"
+                    placeholder="Amount"
+                    value={amount}
+                    onChange={(e) => setAmount(Number(e.target.value))}
+                />
+                <button onClick={handleDepositFuddy}>Deposit</button>
+            </div>
+            <div>
+                <h2>Withdraw FUDDY</h2>
+                <input
+                    type="number"
+                    placeholder="Amount"
+                    value={amount}
+                    onChange={(e) => setAmount(Number(e.target.value))}
+                />
+                <button onClick={handleWithdrawFuddy}>Withdraw</button>
+            </div>
+            <div>
+                <h2>Transfer FUDDY</h2>
                 <input
                     type="text"
                     placeholder="Target Player ID"
@@ -122,39 +171,21 @@ function PlayerDashboard() {
                 />
                 <input
                     type="number"
-                    placeholder="Amount to transfer"
+                    placeholder="Amount"
                     value={transferAmount}
                     onChange={(e) => setTransferAmount(Number(e.target.value))}
                 />
                 <button onClick={handleTransferFuddy}>Transfer</button>
             </div>
             <div>
-                <h2>Deposit Crystals</h2>
-                <select onChange={(e) => setCrystalType(e.target.value)}>
-                    <option value="">Select Crystal Type</option>
-                    <option value="Type1">Type 1</option>
-                    <option value="Type2">Type 2</option>
-                </select>
+                <h2>Convert FUDDY to Blockchain</h2>
                 <input
                     type="number"
                     placeholder="Amount"
                     value={amount}
                     onChange={(e) => setAmount(Number(e.target.value))}
                 />
-                <button onClick={handleDepositCrystalsAction}>Deposit</button>
-            </div>
-            <div>
-                <h2>Convert to $FUDDY</h2>
-                <button onClick={handleConvertToFUDDYAction}>Convert</button>
-            </div>
-            <div>
-                <h2>Transaction History</h2>
-                <button onClick={handleFetchHistory}>Fetch History</button>
-                <ul>
-                    {history.map((record, index) => (
-                        <li key={index}>{JSON.stringify(record)}</li>
-                    ))}
-                </ul>
+                <button onClick={handleConvertFuddyToBlockchain}>Convert</button>
             </div>
         </div>
     );
