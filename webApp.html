@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FullNeuroInterface - Web App</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@dfinity/agent@latest/dist/agent.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Full Neuro Interface</h1>
+
+        <!-- Role Selection -->
+        <div id="role-selection">
+            <h2>Select Your Role</h2>
+            <button onclick="setRole('player')">Enter as Player</button>
+            <button onclick="setRole('gm')">Enter as GM</button>
+        </div>
+
+        <!-- Main App -->
+        <div id="app" style="display: none;">
+            <div>
+                <label>Player ID:</label>
+                <input type="text" id="playerId">
+            </div>
+            <div id="tabs">
+                <button onclick="showTab('wallet')">Wallet</button>
+                <button onclick="showTab('deposit')">Deposit</button>
+                <button onclick="showTab('transfer')">Transfer</button>
+                <button onclick="showTab('convert')">Convert</button>
+                <button onclick="showTab('crystal')">Crystals</button>
+                <button onclick="showTab('nft')">NFTs</button>
+                <button onclick="showTab('transactions')">Transactions</button>
+                <button onclick="showTab('gm')" id="gm-tab" style="display: none;">GM Panel</button>
+            </div>
+
+            <!-- Wallet Overview -->
+            <div class="tab-content" id="wallet">
+                <h2>Wallet Overview</h2>
+                <p>Real FUDDY: <span id="realFuddyBalance">0</span></p>
+                <p>In-Game FUDDY: <span id="inGameFuddyBalance">0</span></p>
+            </div>
+
+            <!-- Deposit -->
+            <div class="tab-content" id="deposit">
+                <h2>Deposit Real FUDDY</h2>
+                <input type="number" id="depositAmount" placeholder="Amount">
+                <button onclick="depositRealFuddy()">Deposit</button>
+            </div>
+
+            <!-- Transfer -->
+            <div class="tab-content" id="transfer">
+                <h2>Transfer Real FUDDY</h2>
+                <input type="text" id="transferRecipient" placeholder="Recipient ID">
+                <input type="number" id="transferAmount" placeholder="Amount">
+                <button onclick="transferRealFuddy()">Transfer</button>
+            </div>
+
+            <!-- Convert -->
+            <div class="tab-content" id="convert">
+                <h2>Convert In-Game FUDDY to Real FUDDY</h2>
+                <input type="number" id="conversionAmount" placeholder="Amount">
+                <button onclick="convertInGameFuddy()">Convert</button>
+            </div>
+
+            <!-- Crystals -->
+            <div class="tab-content" id="crystal">
+                <h2>Crystal Management</h2>
+                <input type="text" id="crystalRecipient" placeholder="Recipient ID">
+                <select id="crystalType">
+                    <option value="Type1">Type 1</option>
+                    <option value="Type2">Type 2</option>
+                    <option value="Type3">Type 3</option>
+                    <option value="Type4">Type 4</option>
+                </select>
+                <input type="number" id="crystalAmount" placeholder="Amount">
+                <button onclick="transferCrystals()">Transfer Crystals</button>
+            </div>
+
+            <!-- NFT -->
+            <div class="tab-content" id="nft">
+                <h2>Create NFT</h2>
+                <input type="text" id="nftName" placeholder="NFT Name">
+                <input type="text" id="nftDesc" placeholder="NFT Description">
+                <button onclick="createNFT()">Create NFT</button>
+            </div>
+
+            <!-- Transactions -->
+            <div class="tab-content" id="transactions">
+                <h2>Transaction History</h2>
+                <button onclick="fetchTransactionHistory()">Fetch History</button>
+                <ul id="transactionList"></ul>
+            </div>
+
+            <!-- GM Panel -->
+            <div class="tab-content" id="gm">
+                <h2>GM Controls</h2>
+                <button onclick="registerPlayer()">Register Player</button>
+                <button onclick="distributeCrystals()">Distribute Crystals</button>
+            </div>
+        </div>
+    </div>
+
+    </script>
+    
+    let userRole = null;
+
+function setRole(role) {
+    userRole = role;
+    document.getElementById("role-selection").style.display = "none";
+    document.getElementById("app").style.display = "block";
+    if (role === "gm") {
+        document.getElementById("gm-tab").style.display = "block";
+    }
+}
+
+function showTab(tabId) {
+    document.querySelectorAll(".tab-content").forEach(tab => tab.style.display = "none");
+    document.getElementById(tabId).style.display = "block";
+}
+
+async function depositRealFuddy() {
+    alert("Deposit successful! (Mock Function)");
+}
+
+async function transferRealFuddy() {
+    alert("Transfer successful! (Mock Function)");
+}
+
+async function convertInGameFuddy() {
+    alert("Conversion successful! (Mock Function)");
+}
+
+async function transferCrystals() {
+    alert("Crystal transfer successful! (Mock Function)");
+}
+
+async function createNFT() {
+    alert("NFT created successfully! (Mock Function)");
+}
+
+async function fetchTransactionHistory() {
+    const transactionList = document.getElementById("transactionList");
+    transactionList.innerHTML = "<li>Mock Transaction Data</li>";
+}
+
+async function registerPlayer() {
+    alert("Player registered successfully! (Mock Function)");
+}
+
+async function distributeCrystals() {
+    alert("Crystals distributed successfully! (Mock Function)");
+}
+    
+</body>
+</html>
