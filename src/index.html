@@ -1,89 +1,209 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Crystal Bank</title>
-
-    <!-- Include a basic stylesheet for styling (optional) -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FullNeuroInterface - Web App</title>
+    <script src="https://cdn.jsdelivr.net/npm/@dfinity/agent@latest/dist/agent.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        h1 {
+            background-color: black;
+            color: cyan;
             text-align: center;
-        }
-        form {
-            max-width: 500px;
-            margin: 20px auto;
             padding: 20px;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-        }
-        input, select, button {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 16px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            border: 2px solid cyan;
+            background-color: rgba(0, 0, 0, 0.8);
         }
         button {
-            background-color: #007bff;
-            color: white;
+            background-color: cyan;
             border: none;
+            padding: 10px;
+            margin: 5px;
             cursor: pointer;
+            color: black;
+            font-weight: bold;
         }
-        button:hover {
-            background-color: #0056b3;
+        input, select {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid cyan;
+            background-color: black;
+            color: cyan;
+        }
+        .tab-content {
+            display: none;
+            margin-top: 20px;
+        }
+        .alert {
+            background-color: rgba(0, 255, 255, 0.2);
+            padding: 10px;
+            margin-top: 10px;
+            border: 1px solid cyan;
+            display: none;
         }
     </style>
 </head>
 <body>
-    <h1>Crystal Bank Interface</h1>
 
-    <form id="registration-form">
-        <h2>Register Player</h2>
-        <label for="playerId">Player ID</label>
-        <input type="text" id="playerId" placeholder="Enter Player ID" required />
-        <button type="button" onclick="registerPlayer()">Register</button>
-    </form>
+    <div class="container">
+        <h1>Full Neuro Interface</h1>
 
-    <form id="deposit-crystals-form">
-        <h2>Deposit Crystals</h2>
-        <label for="crystalType">Crystal Type</label>
-        <input type="text" id="crystalType" placeholder="Enter Crystal Type" required />
-        <label for="amount">Amount</label>
-        <input type="number" id="amount" placeholder="Enter Amount" required />
-        <button type="button" onclick="depositCrystals()">Deposit Crystals</button>
-    </form>
+        <!-- Role Selection -->
+        <div id="role-selection">
+            <h2>Select Your Role</h2>
+            <button onclick="setRole('player')">Enter as Player</button>
+            <button onclick="setRole('gm')">Enter as GM</button>
+        </div>
 
-    <form id="transfer-fuddy-form">
-        <h2>Transfer FUDDY</h2>
-        <label for="fromPlayerId">From Player ID</label>
-        <input type="text" id="fromPlayerId" placeholder="Enter Source Player ID" required />
-        <label for="toPlayerId">To Player ID</label>
-        <input type="text" id="toPlayerId" placeholder="Enter Target Player ID" required />
-        <label for="transferAmount">Amount</label>
-        <input type="number" id="transferAmount" placeholder="Enter Amount" required />
-        <button type="button" onclick="transferFuddy()">Transfer FUDDY</button>
-    </form>
+        <!-- Main App -->
+        <div id="app" style="display: none;">
+            <div>
+                <label>Player ID:</label>
+                <input type="text" id="playerId">
+            </div>
+            <div id="tabs">
+                <button onclick="showTab('wallet')">Wallet</button>
+                <button onclick="showTab('deposit')">Deposit</button>
+                <button onclick="showTab('transfer')">Transfer</button>
+                <button onclick="showTab('convert')">Convert</button>
+                <button onclick="showTab('crystal')">Crystals</button>
+                <button onclick="showTab('nft')">NFTs</button>
+                <button onclick="showTab('transactions')">Transactions</button>
+                <button onclick="showTab('gm')" id="gm-tab" style="display: none;">GM Panel</button>
+            </div>
 
-    <!-- Div for React root if needed -->
-    <div id="root"></div>
+            <!-- Wallet Overview -->
+            <div class="tab-content" id="wallet">
+                <h2>Wallet Overview</h2>
+                <p>Real FUDDY: <span id="realFuddyBalance">0</span></p>
+                <p>In-Game FUDDY: <span id="inGameFuddyBalance">0</span></p>
+            </div>
 
-    <!-- Include the frontend script -->
-    <script type="module" src="./frontend.js"></script>
+            <!-- Deposit -->
+            <div class="tab-content" id="deposit">
+                <h2>Deposit Real FUDDY</h2>
+                <input type="number" id="depositAmount" placeholder="Amount">
+                <button onclick="depositRealFuddy()">Deposit</button>
+            </div>
 
-    <!-- Annotation for Render Deployment -->
-    <!-- Render assumes a static directory. Ensure your `frontend.js` is correctly referenced relative to the deployment directory structure. -->
+            <!-- Transfer -->
+            <div class="tab-content" id="transfer">
+                <h2>Transfer Real FUDDY</h2>
+                <input type="text" id="transferRecipient" placeholder="Recipient ID">
+                <input type="number" id="transferAmount" placeholder="Amount">
+                <button onclick="transferRealFuddy()">Transfer</button>
+            </div>
+
+            <!-- Convert -->
+            <div class="tab-content" id="convert">
+                <h2>Convert In-Game FUDDY to Real FUDDY</h2>
+                <input type="number" id="conversionAmount" placeholder="Amount">
+                <button onclick="convertInGameFuddy()">Convert</button>
+            </div>
+
+            <!-- Crystals -->
+            <div class="tab-content" id="crystal">
+                <h2>Crystal Management</h2>
+                <input type="text" id="crystalRecipient" placeholder="Recipient ID">
+                <select id="crystalType">
+                    <option value="Type1">Type 1</option>
+                    <option value="Type2">Type 2</option>
+                    <option value="Type3">Type 3</option>
+                    <option value="Type4">Type 4</option>
+                </select>
+                <input type="number" id="crystalAmount" placeholder="Amount">
+                <button onclick="transferCrystals()">Transfer Crystals</button>
+            </div>
+
+            <!-- NFT -->
+            <div class="tab-content" id="nft">
+                <h2>Create NFT</h2>
+                <input type="text" id="nftName" placeholder="NFT Name">
+                <input type="text" id="nftDesc" placeholder="NFT Description">
+                <button onclick="createNFT()">Create NFT</button>
+            </div>
+
+            <!-- Transactions -->
+            <div class="tab-content" id="transactions">
+                <h2>Transaction History</h2>
+                <button onclick="fetchTransactionHistory()">Fetch History</button>
+                <ul id="transactionList"></ul>
+            </div>
+
+            <!-- GM Panel -->
+            <div class="tab-content" id="gm">
+                <h2>GM Controls</h2>
+                <button onclick="registerPlayer()">Register Player</button>
+                <button onclick="distributeCrystals()">Distribute Crystals</button>
+            </div>
+
+            <div id="alert" class="alert"></div>
+        </div>
+    </div>
+
+    <script>
+        let userRole = null;
+
+        function setRole(role) {
+            userRole = role;
+            document.getElementById("role-selection").style.display = "none";
+            document.getElementById("app").style.display = "block";
+            if (role === "gm") {
+                document.getElementById("gm-tab").style.display = "block";
+            }
+        }
+
+        function showTab(tabId) {
+            document.querySelectorAll(".tab-content").forEach(tab => tab.style.display = "none");
+            document.getElementById(tabId).style.display = "block";
+        }
+
+        function showAlert(message) {
+            const alertBox = document.getElementById("alert");
+            alertBox.innerText = message;
+            alertBox.style.display = "block";
+            setTimeout(() => alertBox.style.display = "none", 3000);
+        }
+
+        async function depositRealFuddy() {
+            showAlert("Deposit successful! (Mock Function)");
+        }
+
+        async function transferRealFuddy() {
+            showAlert("Transfer successful! (Mock Function)");
+        }
+
+        async function convertInGameFuddy() {
+            showAlert("Conversion successful! (Mock Function)");
+        }
+
+        async function transferCrystals() {
+            showAlert("Crystal transfer successful! (Mock Function)");
+        }
+
+        async function createNFT() {
+            showAlert("NFT created successfully! (Mock Function)");
+        }
+
+        async function fetchTransactionHistory() {
+            const transactionList = document.getElementById("transactionList");
+            transactionList.innerHTML = "<li>Mock Transaction Data</li>";
+        }
+
+        async function registerPlayer() {
+            showAlert("Player registered successfully! (Mock Function)");
+        }
+
+        async function distributeCrystals() {
+            showAlert("Crystals distributed successfully! (Mock Function)");
+        }
+    </script>
+
 </body>
-            </html>
+</html>
