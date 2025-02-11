@@ -4,10 +4,53 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FullNeuroInterface - Web App</title>
-    <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/@dfinity/agent@latest/dist/agent.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: black;
+            color: cyan;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            border: 2px solid cyan;
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+        button {
+            background-color: cyan;
+            border: none;
+            padding: 10px;
+            margin: 5px;
+            cursor: pointer;
+            color: black;
+            font-weight: bold;
+        }
+        input, select {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid cyan;
+            background-color: black;
+            color: cyan;
+        }
+        .tab-content {
+            display: none;
+            margin-top: 20px;
+        }
+        .alert {
+            background-color: rgba(0, 255, 255, 0.2);
+            padding: 10px;
+            margin-top: 10px;
+            border: 1px solid cyan;
+            display: none;
+        }
+    </style>
 </head>
 <body>
+
     <div class="container">
         <h1>Full Neuro Interface</h1>
 
@@ -99,59 +142,68 @@
                 <button onclick="registerPlayer()">Register Player</button>
                 <button onclick="distributeCrystals()">Distribute Crystals</button>
             </div>
+
+            <div id="alert" class="alert"></div>
         </div>
     </div>
 
+    <script>
+        let userRole = null;
+
+        function setRole(role) {
+            userRole = role;
+            document.getElementById("role-selection").style.display = "none";
+            document.getElementById("app").style.display = "block";
+            if (role === "gm") {
+                document.getElementById("gm-tab").style.display = "block";
+            }
+        }
+
+        function showTab(tabId) {
+            document.querySelectorAll(".tab-content").forEach(tab => tab.style.display = "none");
+            document.getElementById(tabId).style.display = "block";
+        }
+
+        function showAlert(message) {
+            const alertBox = document.getElementById("alert");
+            alertBox.innerText = message;
+            alertBox.style.display = "block";
+            setTimeout(() => alertBox.style.display = "none", 3000);
+        }
+
+        async function depositRealFuddy() {
+            showAlert("Deposit successful! (Mock Function)");
+        }
+
+        async function transferRealFuddy() {
+            showAlert("Transfer successful! (Mock Function)");
+        }
+
+        async function convertInGameFuddy() {
+            showAlert("Conversion successful! (Mock Function)");
+        }
+
+        async function transferCrystals() {
+            showAlert("Crystal transfer successful! (Mock Function)");
+        }
+
+        async function createNFT() {
+            showAlert("NFT created successfully! (Mock Function)");
+        }
+
+        async function fetchTransactionHistory() {
+            const transactionList = document.getElementById("transactionList");
+            transactionList.innerHTML = "<li>Mock Transaction Data</li>";
+        }
+
+        async function registerPlayer() {
+            showAlert("Player registered successfully! (Mock Function)");
+        }
+
+        async function distributeCrystals() {
+            showAlert("Crystals distributed successfully! (Mock Function)");
+        }
     </script>
-    
-    let userRole = null;
 
-function setRole(role) {
-    userRole = role;
-    document.getElementById("role-selection").style.display = "none";
-    document.getElementById("app").style.display = "block";
-    if (role === "gm") {
-        document.getElementById("gm-tab").style.display = "block";
-    }
-}
-
-function showTab(tabId) {
-    document.querySelectorAll(".tab-content").forEach(tab => tab.style.display = "none");
-    document.getElementById(tabId).style.display = "block";
-}
-
-async function depositRealFuddy() {
-    alert("Deposit successful! (Mock Function)");
-}
-
-async function transferRealFuddy() {
-    alert("Transfer successful! (Mock Function)");
-}
-
-async function convertInGameFuddy() {
-    alert("Conversion successful! (Mock Function)");
-}
-
-async function transferCrystals() {
-    alert("Crystal transfer successful! (Mock Function)");
-}
-
-async function createNFT() {
-    alert("NFT created successfully! (Mock Function)");
-}
-
-async function fetchTransactionHistory() {
-    const transactionList = document.getElementById("transactionList");
-    transactionList.innerHTML = "<li>Mock Transaction Data</li>";
-}
-
-async function registerPlayer() {
-    alert("Player registered successfully! (Mock Function)");
-}
-
-async function distributeCrystals() {
-    alert("Crystals distributed successfully! (Mock Function)");
-}
-    
 </body>
 </html>
