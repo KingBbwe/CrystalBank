@@ -1,209 +1,950 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FullNeuroInterface - Web App</title>
-    <script src="https://cdn.jsdelivr.net/npm/@dfinity/agent@latest/dist/agent.min.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: black;
-            color: cyan;
-            text-align: center;
-            padding: 20px;
-        }
-        .container {
-            max-width: 600px;
-            margin: auto;
-            padding: 20px;
-            border: 2px solid cyan;
-            background-color: rgba(0, 0, 0, 0.8);
-        }
-        button {
-            background-color: cyan;
-            border: none;
-            padding: 10px;
-            margin: 5px;
-            cursor: pointer;
-            color: black;
-            font-weight: bold;
-        }
-        input, select {
-            padding: 8px;
-            margin: 5px;
-            border: 1px solid cyan;
-            background-color: black;
-            color: cyan;
-        }
-        .tab-content {
-            display: none;
-            margin-top: 20px;
-        }
-        .alert {
-            background-color: rgba(0, 255, 255, 0.2);
-            padding: 10px;
-            margin-top: 10px;
-            border: 1px solid cyan;
-            display: none;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Crystal Bank - Aetherweave Portal</title>
+  <style>
+    :root {
+      --neon-blue: #00f3ff;
+      --matrix-green: #00ff9d;
+      --cyber-purple: #a600ff;
+      --hud-red: #ff0033;
+      --deep-void: #0a0a12;
+      --interface-glow: 0 0 15px;
+      /* Category colors */
+      --cat-bank: #00f3ff;     /* Neon Blue for bank functions */
+      --cat-escrow: #00ff9d;   /* Teal-green for escrow functions */
+      --cat-admin: #32CD32;    /* Lime Green for admin functions */
+      --cat-nft: #FFA500;      /* Orange for NFT functions */
+    }
+    body {
+      background: var(--deep-void);
+      color: var(--neon-blue);
+      font-family: 'OCR A Std', monospace;
+      margin: 0;
+      padding: 10px;
+      min-height: 100vh;
+    }
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: #001219;
+      padding: 10px;
+      border-bottom: 2px solid var(--neon-blue);
+      z-index: 1001;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.5em;
+    }
+    header img.logo {
+      height: 40px;
+      margin: 0 10px;
+    }
+    header button {
+      background: var(--neon-blue);
+      border: none;
+      padding: 8px 12px;
+      color: black;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .container {
+      padding-top: 70px;
+      max-width: 800px;
+      margin: 0 auto;
+      padding-bottom: 70px;
+    }
+    .cyber-panel {
+      border: 2px solid var(--neon-blue);
+      background: #001219dd;
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: var(--interface-glow) var(--neon-blue);
+    }
+    .wallet-hud {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      padding: 10px;
+      background: #001a1a;
+    }
+    .hud-item {
+      padding: 10px;
+      border: 1px solid var(--matrix-green);
+    }
+    .hud-value {
+      font-size: 1.2em;
+      text-shadow: 0 0 10px var(--matrix-green);
+    }
+    .cyber-button {
+      background: none;
+      border: 2px solid var(--neon-blue);
+      color: var(--neon-blue);
+      padding: 12px;
+      width: 100%;
+      cursor: pointer;
+      font-size: 0.9em;
+      margin: 5px 0;
+      box-sizing: border-box;
+    }
+    .cyber-button:hover {
+      background: rgba(0, 243, 255, 0.1);
+    }
+    /* Category-based button styles */
+    .cat-bank { border-color: var(--cat-bank); color: var(--cat-bank); }
+    .cat-escrow { border-color: var(--cat-escrow); color: var(--cat-escrow); }
+    .cat-admin { border-color: var(--cat-admin); color: var(--cat-admin); }
+    .cat-nft { border-color: var(--cat-nft); color: var(--cat-nft); }
+    .cyber-input, .cyber-select {
+      background: #001219;
+      border: 2px solid var(--neon-blue);
+      color: var(--neon-blue);
+      padding: 12px;
+      margin: 5px 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .alert {
+      position: fixed;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 15px;
+      background: rgba(255, 0, 51, 0.2);
+      color: var(--hud-red);
+      border: 1px solid var(--hud-red);
+      z-index: 1002;
+      display: none;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .menu {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-around;
+      margin-bottom: 15px;
+    }
+    .menu button {
+      flex: 1 0 30%;
+      margin: 5px;
+    }
+    .mobile-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #001219;
+      padding: 10px;
+      display: flex;
+      justify-content: space-around;
+      border-top: 2px solid var(--neon-blue);
+      z-index: 1000;
+    }
+    /* Common Payment Request View */
+    #commonContent {
+      display: none;
+    }
+    #backButton {
+      margin-bottom: 10px;
+    }
+  </style>
 </head>
 <body>
+  <!-- Persistent Header -->
+  <header id="header" style="display: none;">
+    <h1>The Crystal Bank - Aetherweave Portal</h1>
+    <img src="https://drive.google.com/uc?id=1cFDXCK3M_U0rRkCg9cfB8uzlNbHBKMU4" alt="Crystal Bank Logo" class="logo" />
+    <button onclick="logout()">Logout</button>
+  </header>
 
-    <div class="container">
-        <h1>Full Neuro Interface</h1>
-
-        <!-- Role Selection -->
-        <div id="role-selection">
-            <h2>Select Your Role</h2>
-            <button onclick="setRole('player')">Enter as Player</button>
-            <button onclick="setRole('gm')">Enter as GM</button>
-        </div>
-
-        <!-- Main App -->
-        <div id="app" style="display: none;">
-            <div>
-                <label>Player ID:</label>
-                <input type="text" id="playerId">
-            </div>
-            <div id="tabs">
-                <button onclick="showTab('wallet')">Wallet</button>
-                <button onclick="showTab('deposit')">Deposit</button>
-                <button onclick="showTab('transfer')">Transfer</button>
-                <button onclick="showTab('convert')">Convert</button>
-                <button onclick="showTab('crystal')">Crystals</button>
-                <button onclick="showTab('nft')">NFTs</button>
-                <button onclick="showTab('transactions')">Transactions</button>
-                <button onclick="showTab('gm')" id="gm-tab" style="display: none;">GM Panel</button>
-            </div>
-
-            <!-- Wallet Overview -->
-            <div class="tab-content" id="wallet">
-                <h2>Wallet Overview</h2>
-                <p>Real FUDDY: <span id="realFuddyBalance">0</span></p>
-                <p>In-Game FUDDY: <span id="inGameFuddyBalance">0</span></p>
-            </div>
-
-            <!-- Deposit -->
-            <div class="tab-content" id="deposit">
-                <h2>Deposit Real FUDDY</h2>
-                <input type="number" id="depositAmount" placeholder="Amount">
-                <button onclick="depositRealFuddy()">Deposit</button>
-            </div>
-
-            <!-- Transfer -->
-            <div class="tab-content" id="transfer">
-                <h2>Transfer Real FUDDY</h2>
-                <input type="text" id="transferRecipient" placeholder="Recipient ID">
-                <input type="number" id="transferAmount" placeholder="Amount">
-                <button onclick="transferRealFuddy()">Transfer</button>
-            </div>
-
-            <!-- Convert -->
-            <div class="tab-content" id="convert">
-                <h2>Convert In-Game FUDDY to Real FUDDY</h2>
-                <input type="number" id="conversionAmount" placeholder="Amount">
-                <button onclick="convertInGameFuddy()">Convert</button>
-            </div>
-
-            <!-- Crystals -->
-            <div class="tab-content" id="crystal">
-                <h2>Crystal Management</h2>
-                <input type="text" id="crystalRecipient" placeholder="Recipient ID">
-                <select id="crystalType">
-                    <option value="Type1">Type 1</option>
-                    <option value="Type2">Type 2</option>
-                    <option value="Type3">Type 3</option>
-                    <option value="Type4">Type 4</option>
-                </select>
-                <input type="number" id="crystalAmount" placeholder="Amount">
-                <button onclick="transferCrystals()">Transfer Crystals</button>
-            </div>
-
-            <!-- NFT -->
-            <div class="tab-content" id="nft">
-                <h2>Create NFT</h2>
-                <input type="text" id="nftName" placeholder="NFT Name">
-                <input type="text" id="nftDesc" placeholder="NFT Description">
-                <button onclick="createNFT()">Create NFT</button>
-            </div>
-
-            <!-- Transactions -->
-            <div class="tab-content" id="transactions">
-                <h2>Transaction History</h2>
-                <button onclick="fetchTransactionHistory()">Fetch History</button>
-                <ul id="transactionList"></ul>
-            </div>
-
-            <!-- GM Panel -->
-            <div class="tab-content" id="gm">
-                <h2>GM Controls</h2>
-                <button onclick="registerPlayer()">Register Player</button>
-                <button onclick="distributeCrystals()">Distribute Crystals</button>
-            </div>
-
-            <div id="alert" class="alert"></div>
-        </div>
+  <div class="container">
+    <!-- Login Screen -->
+    <div id="loginScreen" class="cyber-panel">
+      <div style="display: flex; align-items: center; justify-content: center;">
+        <h1 style="margin-right: 10px; font-size: 1.2em;">The Crystal Bank</h1>
+        <img src="https://drive.google.com/uc?id=1cFDXCK3M_U0rRkCg9cfB8uzlNbHBKMU4" alt="Crystal Bank Logo" style="height: 60px;" />
+      </div>
+      <p>Select Access Mode:</p>
+      <div class="menu">
+        <button class="cyber-button cat-bank" onclick="login('player')">Player Access</button>
+        <button class="cyber-button cat-admin" onclick="login('admin')">Admin Access</button>
+      </div>
     </div>
 
-    <script>
-        let userRole = null;
+    <!-- Player Interface -->
+    <div id="playerApp" style="display: none;">
+      <div class="cyber-panel">
+        <input type="text" id="playerId" class="cyber-input" placeholder="PLAYER ID" oninput="updateSellerDisplay()" />
+      </div>
+      <div class="cyber-panel menu" id="playerMenu">
+        <button class="cyber-button cat-bank" onclick="showTab('wallet')">Wallet</button>
+        <button class="cyber-button cat-bank" onclick="showTab('depositFuddy')">Deposit $FUDDY</button>
+        <button class="cyber-button cat-bank" onclick="showTab('transferFuddy')">Transfer $FUDDY</button>
+        <button class="cyber-button cat-bank" onclick="showTab('convertFuddy')">Convert ig‑FUDDY</button>
+        <button class="cyber-button cat-escrow" onclick="showTab('depositCrystals')">Deposit Crystals</button>
+        <button class="cyber-button cat-escrow" onclick="showTab('crystalTransfer')">Transfer Crystals</button>
+        <button class="cyber-button cat-bank" onclick="showTab('withdrawFuddy')">Withdraw $FUDDY</button>
+        <button class="cyber-button cat-nft" onclick="showTab('nft')">NFTs</button>
+        <button class="cyber-button cat-bank" onclick="showTab('transactions')">Transactions</button>
+        <button class="cyber-button cat-bank" onclick="showTab('profile')">Profile</button>
+        <button class="cyber-button cat-bank" onclick="showTab('buy')">Buy FUDDY</button>
+        <button class="cyber-button cat-bank" onclick="showCommonTab('paymentRequest')">Payment Request</button>
+      </div>
+      <div id="playerContent">
+        <!-- Wallet Overview -->
+        <div class="tab-content active" id="wallet">
+          <div class="cyber-panel wallet-hud">
+            <div class="hud-item">
+              <h3>$FUDDY</h3>
+              <div class="hud-value" id="realFuddyBalance"></div>
+            </div>
+            <div class="hud-item">
+              <h3>ig‑FUDDY</h3>
+              <div class="hud-value" id="inGameFuddyBalance"></div>
+            </div>
+            <div class="hud-item">
+              <h3>CRYSTALS</h3>
+              <div class="hud-value" id="crystals"></div>
+            </div>
+            <div class="hud-item">
+              <h3>NFTs</h3>
+              <div class="hud-value" id="nfts"></div>
+            </div>
+          </div>
+        </div>
+        <!-- Deposit $FUDDY -->
+        <div class="tab-content" id="depositFuddy">
+          <div class="cyber-panel">
+            <h2>Deposit $FUDDY</h2>
+            <input type="number" id="depositAmount" class="cyber-input" placeholder="Amount">
+            <button class="cyber-button" onclick="depositRealFuddy()">Deposit</button>
+          </div>
+        </div>
+        <!-- Transfer $FUDDY -->
+        <div class="tab-content" id="transferFuddy">
+          <div class="cyber-panel">
+            <h2>Transfer $FUDDY</h2>
+            <input type="text" id="transferRecipient" class="cyber-input" placeholder="Recipient ID">
+            <input type="number" id="transferAmount" class="cyber-input" placeholder="Amount">
+            <button class="cyber-button" onclick="transferRealFuddy()">Transfer</button>
+          </div>
+        </div>
+        <!-- Convert ig‑FUDDY -->
+        <div class="tab-content" id="convertFuddy">
+          <div class="cyber-panel">
+            <h2>Convert ig‑FUDDY to $FUDDY</h2>
+            <input type="number" id="conversionAmount" class="cyber-input" placeholder="Amount">
+            <button class="cyber-button" onclick="convertInGameFuddy()">Convert</button>
+          </div>
+        </div>
+        <!-- Deposit Crystals -->
+        <div class="tab-content" id="depositCrystals">
+          <div class="cyber-panel cat-escrow">
+            <h2>Deposit Crystals</h2>
+            <select id="depositCrystalType" class="cyber-select">
+              <option value="">Select Crystal Type</option>
+              <option value="Type1">Type 1</option>
+              <option value="Type2">Type 2</option>
+              <option value="Type3">Type 3</option>
+              <option value="Type4">Type 4</option>
+            </select>
+            <input type="text" id="depositCrystalName" class="cyber-input" placeholder="Crystal Name (Annotation)">
+            <input type="number" id="depositCrystalAmount" class="cyber-input" placeholder="Amount">
+            <button class="cyber-button" onclick="depositCrystals()">Deposit Crystals</button>
+          </div>
+        </div>
+        <!-- Transfer Crystals -->
+        <div class="tab-content" id="crystalTransfer">
+          <div class="cyber-panel cat-escrow">
+            <h2>Transfer Crystals</h2>
+            <input type="text" id="crystalTransferRecipient" class="cyber-input" placeholder="Recipient ID">
+            <input type="text" id="crystalTransferName" class="cyber-input" placeholder="Crystal Name (Annotation)">
+            <select id="crystalTransferType" class="cyber-select">
+              <option value="">Select Crystal Type</option>
+              <option value="Type1">Type 1</option>
+              <option value="Type2">Type 2</option>
+              <option value="Type3">Type 3</option>
+              <option value="Type4">Type 4</option>
+            </select>
+            <input type="number" id="crystalTransferAmount" class="cyber-input" placeholder="Amount">
+            <button class="cyber-button" onclick="transferCrystals()">Transfer Crystals</button>
+          </div>
+        </div>
+        <!-- Withdraw $FUDDY -->
+        <div class="tab-content" id="withdrawFuddy">
+          <div class="cyber-panel cat-bank">
+            <h2>Withdraw $FUDDY</h2>
+            <input type="number" id="withdrawAmount" class="cyber-input" placeholder="Amount">
+            <input type="text" id="withdrawAddress" class="cyber-input" placeholder="Withdrawal Wallet Address">
+            <button class="cyber-button" onclick="withdrawFuddy()">Withdraw $FUDDY</button>
+          </div>
+        </div>
+        <!-- NFT Creation -->
+        <div class="tab-content" id="nft">
+          <div class="cyber-panel cat-nft">
+            <h2>Create NFT</h2>
+            <input type="text" id="nftName" class="cyber-input" placeholder="NFT Name">
+            <input type="text" id="nftDesc" class="cyber-input" placeholder="NFT Description">
+            <button class="cyber-button" onclick="createNFT()">Create NFT</button>
+          </div>
+        </div>
+        <!-- Transaction History -->
+        <div class="tab-content" id="transactions">
+          <div class="cyber-panel cat-bank">
+            <h2>Transaction History</h2>
+            <button class="cyber-button" onclick="fetchTransactionHistory()">Fetch History</button>
+            <ul id="transactionList"></ul>
+          </div>
+        </div>
+        <!-- Profile -->
+        <div class="tab-content" id="profile">
+          <div class="cyber-panel cat-bank">
+            <h2>Your Profile</h2>
+            <p>Player ID: <span id="profilePlayerId"></span></p>
+            <p>Referral Code: <span id="referralCode">ABC123</span></p>
+            <input type="text" id="referralInput" class="cyber-input" placeholder="Enter referral code">
+            <button class="cyber-button" onclick="applyReferral()">Apply Referral</button>
+          </div>
+        </div>
+        <!-- Buy $FUDDY -->
+        <div class="tab-content" id="buy">
+          <div class="cyber-panel cat-bank">
+            <h2>Buy $FUDDY</h2>
+            <input type="number" id="buyAmount" class="cyber-input" placeholder="Amount">
+            <button class="cyber-button" onclick="handleBuyFuddy()">Buy</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
-        function setRole(role) {
-            userRole = role;
-            document.getElementById("role-selection").style.display = "none";
-            document.getElementById("app").style.display = "block";
-            if (role === "gm") {
-                document.getElementById("gm-tab").style.display = "block";
-            }
+    <!-- Admin Interface -->
+    <div id="adminInterface" style="display: none;">
+      <div class="cyber-panel">
+        <h2>Admin Controls</h2>
+        <div class="menu">
+          <button class="cyber-button cat-admin" onclick="showTab('register')">Register Player</button>
+          <button class="cyber-button cat-admin" onclick="showTab('distribute')">Distribute Crystals</button>
+          <button class="cyber-button cat-admin" onclick="showTab('adminTransfers')">Transfer $FUDDY</button>
+          <button class="cyber-button cat-admin" onclick="showTab('adminConvert')">Convert ig‑FUDDY</button>
+          <button class="cyber-button cat-admin" onclick="showTab('adjustBehavior')">Adjust Behavior</button>
+          <button class="cyber-button cat-admin" onclick="showTab('updateRate')">Update Conversion Rate</button>
+          <button class="cyber-button cat-admin" onclick="showTab('economicHealth')">Economic Health</button>
+          <button class="cyber-button cat-admin" onclick="showTab('systemControl')">Pause/Resume System</button>
+          <button class="cyber-button cat-admin" onclick="showTab('globalAudit')">Global Transaction Stats</button>
+          <button class="cyber-button cat-admin" onclick="showTab('adminWithdraw')">Withdraw $FUDDY</button>
+          <button class="cyber-button cat-admin" onclick="showTab('generateCrystals')">Generate/Add Crystals</button>
+          <button class="cyber-button cat-bank" onclick="showCommonTab('paymentRequest')">Payment Request</button>
+        </div>
+        <div id="adminContent">
+          <!-- Register Player -->
+          <div class="tab-content" id="register">
+            <div class="cyber-panel">
+              <h2>Register Player</h2>
+              <input type="text" class="cyber-input" placeholder="Player ID" id="adminPlayerId">
+              <button class="cyber-button" onclick="handleRegisterPlayer()">Register</button>
+            </div>
+          </div>
+          <!-- Distribute Crystals -->
+          <div class="tab-content" id="distribute">
+            <div class="cyber-panel">
+              <h2>Distribute Crystals</h2>
+              <input type="text" class="cyber-input" placeholder="Player ID" id="adminDistPlayerId">
+              <select class="cyber-select" id="adminDistCrystalType">
+                <option value="">Select Crystal Type</option>
+                <option value="Type1">Type 1</option>
+                <option value="Type2">Type 2</option>
+                <option value="Type3">Type 3</option>
+                <option value="Type4">Type 4</option>
+              </select>
+              <input type="text" class="cyber-input" placeholder="Crystal Name (Annotation)">
+              <input type="number" class="cyber-input" placeholder="Amount" id="adminDistributeAmount">
+              <button class="cyber-button" onclick="handleDistributeCrystals()">Distribute</button>
+            </div>
+          </div>
+          <!-- Transfer $FUDDY (Admin) -->
+          <div class="tab-content" id="adminTransfers">
+            <div class="cyber-panel">
+              <h2>Transfer $FUDDY (Admin)</h2>
+              <input type="text" class="cyber-input" placeholder="Recipient ID" id="adminTransferRecipient">
+              <input type="number" class="cyber-input" placeholder="Amount" id="adminTransferAmount">
+              <button class="cyber-button" onclick="handleAdminTransferFuddy()">Transfer</button>
+            </div>
+          </div>
+          <!-- Convert ig‑FUDDY (Admin) -->
+          <div class="tab-content" id="adminConvert">
+            <div class="cyber-panel">
+              <h2>Convert ig‑FUDDY (Admin)</h2>
+              <input type="number" class="cyber-input" placeholder="Amount" id="adminConversionAmount">
+              <button class="cyber-button" onclick="handleAdminConvertFuddy()">Convert</button>
+            </div>
+          </div>
+          <!-- Adjust Behavior -->
+          <div class="tab-content" id="adjustBehavior">
+            <div class="cyber-panel">
+              <h2>Adjust Player Behavior</h2>
+              <input type="text" class="cyber-input" placeholder="Target Player ID" id="gmBehaviorPlayerId">
+              <select class="cyber-select" id="gmAdjustmentType" onchange="setGmAdjustmentType(this.value)">
+                <option value="reward">Reward</option>
+                <option value="penalty">Penalty</option>
+              </select>
+              <input type="number" class="cyber-input" placeholder="Adjustment Amount" id="gmAdjustmentAmount">
+              <button class="cyber-button" onclick="handleAdjustBehavior()">Adjust Behavior</button>
+            </div>
+          </div>
+          <!-- Update Conversion Rate -->
+          <div class="tab-content" id="updateRate">
+            <div class="cyber-panel">
+              <h2>Update Conversion Rate</h2>
+              <select class="cyber-select" id="gmRateCrystalType" onchange="setGmRateCrystalType(this.value)">
+                <option value="Type1">Type 1</option>
+                <option value="Type2">Type 2</option>
+                <option value="Type3">Type 3</option>
+                <option value="Type4">Type 4</option>
+              </select>
+              <input type="number" class="cyber-input" placeholder="New Rate" id="gmNewRate" onchange="setGmNewRate(this.value)">
+              <button class="cyber-button" onclick="handleUpdateRate()">Update Rate</button>
+            </div>
+          </div>
+          <!-- Economic Health -->
+          <div class="tab-content" id="economicHealth">
+            <div class="cyber-panel">
+              <h2>Economic Health Indicators</h2>
+              <p>Total $FUDDY: <span id="totalRealFuddy"></span></p>
+              <p>Total ig‑FUDDY: <span id="totalInGameFuddy"></span></p>
+              <p>System Reserve: <span id="systemReserve"></span></p>
+              <p>Avg. Behavior Score: <span id="avgBehaviorScore"></span></p>
+              <button class="cyber-button" onclick="handleViewEconomicHealth()">Refresh Indicators</button>
+            </div>
+          </div>
+          <!-- System Pause/Resume -->
+          <div class="tab-content" id="systemControl">
+            <div class="cyber-panel">
+              <h2>System Pause/Resume</h2>
+              <button class="cyber-button" onclick="handleSystemControl()">Toggle System Status</button>
+            </div>
+          </div>
+          <!-- Global Transaction Stats -->
+          <div class="tab-content" id="globalAudit">
+            <div class="cyber-panel">
+              <h2>Global Transaction Stats</h2>
+              <p>Total Transactions: <span id="totalTransactions"></span></p>
+              <p>Total Resources Exchanged: <span id="totalResourcesExchanged"></span></p>
+              <p>Most Frequent Type: <span id="mostFrequentType"></span></p>
+              <button class="cyber-button" onclick="handleViewGlobalStats()">Refresh Stats</button>
+            </div>
+          </div>
+          <!-- Withdraw $FUDDY (Admin) -->
+          <div class="tab-content" id="adminWithdraw">
+            <div class="cyber-panel">
+              <h2>Withdraw $FUDDY (Admin)</h2>
+              <input type="number" class="cyber-input" placeholder="Amount" id="gmAdminWithdrawAmount" onchange="setGmAdminWithdrawAmount(this.value)">
+              <input type="text" class="cyber-input" placeholder="Destination Wallet Address" id="gmAdminWithdrawAddress" onchange="setGmAdminWithdrawAddress(this.value)">
+              <button class="cyber-button" onclick="handleAdminWithdrawFuddy()">Withdraw</button>
+            </div>
+          </div>
+          <!-- Generate/Add Crystals -->
+          <div class="tab-content" id="generateCrystals">
+            <div class="cyber-panel">
+              <h2>Generate/Add Crystals</h2>
+              <button class="cyber-button" onclick="handleGenerateCrystals()">Generate Crystals</button>
+              <div id="crystalPoolDisplay">
+                <p>Type 1: <span id="poolType1"></span></p>
+                <p>Type 2: <span id="poolType2"></span></p>
+                <p>Type 3: <span id="poolType3"></span></p>
+                <p>Type 4: <span id="poolType4"></span></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Common Payment Request View -->
+    <div id="commonContent">
+      <div class="cyber-panel">
+        <button id="backButton" class="cyber-button" onclick="backToInterface()">← Back</button>
+        <h2>Payment Request</h2>
+        <p><strong>Send Request (as Seller):</strong></p>
+        <!-- For players, display seller ID; for admin, show input -->
+        <div id="playerSellerDiv" style="display: none;">
+          <p>Seller ID: <span id="sellerIdDisplay"></span></p>
+        </div>
+        <div id="adminSellerDiv" style="display: none;">
+          <input type="text" id="adminSellerIdCommon" class="cyber-input" placeholder="Seller ID (Admin)">
+        </div>
+        <input type="text" id="prBuyerIdCommon" class="cyber-input" placeholder="Buyer ID">
+        <select id="prPaymentTypeCommon" class="cyber-select" onchange="togglePrCrystalTypeCommon()">
+          <option value="FUDDY">FUDDY</option>
+          <option value="Crystals">Crystals</option>
+        </select>
+        <div id="prCrystalTypeDivCommon" style="display: none;">
+          <select id="prCrystalTypeCommon" class="cyber-select">
+            <option value="">Select Crystal Type</option>
+            <option value="Type1">Type 1</option>
+            <option value="Type2">Type 2</option>
+            <option value="Type3">Type 3</option>
+            <option value="Type4">Type 4</option>
+          </select>
+          <input type="text" id="prCrystalNameCommon" class="cyber-input" placeholder="Crystal Name (Annotation)">
+        </div>
+        <input type="number" id="prAmountCommon" class="cyber-input" placeholder="Amount">
+        <div id="prForDivCommon" style="display: none;">
+          <input type="text" id="prForCommon" class="cyber-input" placeholder="For (NPC/Entity)">
+        </div>
+        <button class="cyber-button" onclick="sendPaymentRequestCommon()">Send Payment Request</button>
+        <hr />
+        <p><strong>Incoming Payment Requests:</strong></p>
+        <div id="incomingRequestsCommon"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Navigation -->
+  <nav class="mobile-nav">
+    <div onclick="showTab('wallet')">💰</div>
+    <div onclick="showTab('depositCrystals')">💎</div>
+    <div onclick="showTab('transactions')">📜</div>
+  </nav>
+
+  <div id="alert" class="alert"></div>
+
+  <script>
+    // Global Variables & Mock Data (declared only once)
+    var currentUser = null;
+    var paymentRequests = [];
+    var mockData = {
+      balances: {
+        realFuddy: 1000,
+        gameFuddy: 500,
+        crystals: 200,
+        nfts: 3
+      },
+      transactions: [
+        { type: "Deposit", amount: 100, time: new Date().toLocaleString() },
+        { type: "Convert", amount: 50, time: new Date().toLocaleString() }
+      ],
+      economic: {
+        totalRealFuddy: 5000000,
+        totalInGameFuddy: 8000000,
+        systemReserve: 100000,
+        avgBehaviorScore: 75
+      },
+      globalStats: {
+        totalTransactions: 1200,
+        totalResourcesExchanged: 750000,
+        mostFrequentType: "Deposit"
+      },
+      crystalPool: {
+        Type1: 10000,
+        Type2: 5000,
+        Type3: 2500,
+        Type4: 1000
+      }
+    };
+
+    // -----------------------------
+    // Payment Request (Common View) Functions
+    // -----------------------------
+    function togglePrCrystalTypeCommon() {
+      var type = document.getElementById("prPaymentTypeCommon").value;
+      document.getElementById("prCrystalTypeDivCommon").style.display = (type === "Crystals") ? "block" : "none";
+      if (currentUser === "admin") {
+        document.getElementById("prForDivCommon").style.display = "block";
+      } else {
+        document.getElementById("prForDivCommon").style.display = "none";
+      }
+    }
+
+    function sendPaymentRequestCommon() {
+      var seller = (currentUser === "admin")
+        ? document.getElementById("adminSellerIdCommon").value
+        : document.getElementById("playerId").value;
+      var buyer = document.getElementById("prBuyerIdCommon").value;
+      var paymentType = document.getElementById("prPaymentTypeCommon").value;
+      var crystalType = null, crystalName = null;
+      if (paymentType === "Crystals") {
+        crystalType = document.getElementById("prCrystalTypeCommon").value;
+        crystalName = document.getElementById("prCrystalNameCommon").value;
+      }
+      var amount = Number(document.getElementById("prAmountCommon").value);
+      var requestFor = (currentUser === "admin") ? document.getElementById("prForCommon").value : "";
+      if (!seller || !buyer || !amount || (paymentType === "Crystals" && (!crystalType || !crystalName))) {
+        showAlert("Please fill all fields for the payment request.");
+        return;
+      }
+      var req = {
+        seller: seller,
+        buyer: buyer,
+        paymentType: paymentType,
+        crystalType: crystalType,
+        crystalName: crystalName,
+        amount: amount,
+        requestFor: requestFor,
+        status: "pending"
+      };
+      paymentRequests.push(req);
+      showAlert("Payment request sent.");
+      updateIncomingRequestsCommon();
+    }
+
+    function updateIncomingRequestsCommon() {
+      var buyerId = document.getElementById("playerId").value;
+      var incoming = paymentRequests.filter(function(r) {
+        return r.buyer === buyerId && r.status === "pending";
+      });
+      var container = document.getElementById("incomingRequestsCommon");
+      container.innerHTML = incoming.map(function(r, i) {
+        return '<div style="border: 1px solid var(--neon-blue); padding: 5px; margin: 5px 0;">' +
+                 '<p>From: ' + r.seller + ' | ' + r.paymentType + ' ' +
+                 (r.paymentType==="Crystals" ? '(' + r.crystalType + ', ' + r.crystalName + ')' : '') +
+                 ' | Amount: ' + r.amount + (r.requestFor ? ' | For: ' + r.requestFor : '') + '</p>' +
+                 '<button onclick="approveRequestCommon(' + i + ')">Approve</button>' +
+                 '<button onclick="rejectRequestCommon(' + i + ')">Reject</button>' +
+               '</div>';
+      }).join("");
+    }
+
+    function approveRequestCommon(index) {
+      var req = paymentRequests[index];
+      if (req.paymentType === "FUDDY") {
+        if (mockData.balances.realFuddy < req.amount) {
+          showAlert("Buyer does not have enough $FUDDY.");
+          return;
         }
+        mockData.balances.realFuddy -= req.amount;
+        showAlert("Approved: Transferred " + req.amount + " $FUDDY from buyer to seller.");
+      } else if (req.paymentType === "Crystals") {
+        showAlert("Approved: Transferred " + req.amount + " crystals (" + req.crystalType + ", " + req.crystalName + ") from buyer to seller.");
+      }
+      req.status = "approved";
+      updateIncomingRequestsCommon();
+      loadData();
+    }
 
-        function showTab(tabId) {
-            document.querySelectorAll(".tab-content").forEach(tab => tab.style.display = "none");
-            document.getElementById(tabId).style.display = "block";
+    function rejectRequestCommon(index) {
+      paymentRequests[index].status = "rejected";
+      showAlert("Payment request rejected.");
+      updateIncomingRequestsCommon();
+    }
+
+    // -----------------------------
+    // Navigation & Header Functions
+    // -----------------------------
+    function login(role) {
+      currentUser = role;
+      document.getElementById("loginScreen").style.display = "none";
+      document.getElementById("header").style.display = "flex";
+      if (role === "player") {
+        document.getElementById("playerApp").style.display = "block";
+        document.getElementById("adminInterface").style.display = "none";
+        loadData();
+        document.getElementById("playerSellerDiv").style.display = "block";
+        document.getElementById("adminSellerDiv").style.display = "none";
+        document.getElementById("sellerIdDisplay").textContent = document.getElementById("playerId").value;
+      } else if (role === "admin") {
+        document.getElementById("adminInterface").style.display = "block";
+        document.getElementById("playerApp").style.display = "none";
+        document.getElementById("adminSellerDiv").style.display = "block";
+        document.getElementById("playerSellerDiv").style.display = "none";
+      }
+    }
+
+    function logout() {
+      currentUser = null;
+      document.getElementById("loginScreen").style.display = "block";
+      document.getElementById("header").style.display = "none";
+      document.getElementById("playerApp").style.display = "none";
+      document.getElementById("adminInterface").style.display = "none";
+      document.getElementById("commonContent").style.display = "none";
+    }
+
+    // Show common view (for Payment Request) and hide current interface
+    function showCommonTab(tabId) {
+      document.getElementById("playerApp").style.display = "none";
+      document.getElementById("adminInterface").style.display = "none";
+      document.getElementById("commonContent").style.display = "block";
+      var tabs = document.querySelectorAll("#commonContent .tab-content");
+      for (var i = 0; i < tabs.length; i++) {
+        tabs[i].classList.remove("active");
+      }
+      var el = document.getElementById(tabId);
+      if (el) el.classList.add("active");
+      if (tabId === "paymentRequest") {
+        updateIncomingRequestsCommon();
+        if (currentUser === "player") {
+          document.getElementById("playerSellerDiv").style.display = "block";
+          document.getElementById("adminSellerDiv").style.display = "none";
+          document.getElementById("sellerIdDisplay").textContent = document.getElementById("playerId").value;
+        } else if (currentUser === "admin") {
+          document.getElementById("adminSellerDiv").style.display = "block";
+          document.getElementById("playerSellerDiv").style.display = "none";
         }
+      }
+    }
 
-        function showAlert(message) {
-            const alertBox = document.getElementById("alert");
-            alertBox.innerText = message;
-            alertBox.style.display = "block";
-            setTimeout(() => alertBox.style.display = "none", 3000);
-        }
+    function backToInterface() {
+      document.getElementById("commonContent").style.display = "none";
+      if (currentUser === "player") {
+        document.getElementById("playerApp").style.display = "block";
+      } else if (currentUser === "admin") {
+        document.getElementById("adminInterface").style.display = "block";
+      }
+    }
 
-        async function depositRealFuddy() {
-            showAlert("Deposit successful! (Mock Function)");
-        }
+    function showTab(tabId) {
+      document.getElementById("commonContent").style.display = "none";
+      if (currentUser === "player") {
+        document.getElementById("playerApp").style.display = "block";
+      } else if (currentUser === "admin") {
+        document.getElementById("adminInterface").style.display = "block";
+      }
+      var tabs = document.querySelectorAll(".tab-content");
+      for (var i = 0; i < tabs.length; i++) {
+        tabs[i].classList.remove("active");
+      }
+      var el = document.getElementById(tabId);
+      if (el) el.classList.add("active");
+      if (tabId === "paymentRequest") {
+        updateIncomingRequestsCommon();
+      }
+    }
 
-        async function transferRealFuddy() {
-            showAlert("Transfer successful! (Mock Function)");
-        }
+    function showAlert(message) {
+      var alertBox = document.getElementById("alert");
+      alertBox.textContent = message;
+      alertBox.style.display = "block";
+      setTimeout(function() { alertBox.style.display = "none"; }, 3000);
+    }
 
-        async function convertInGameFuddy() {
-            showAlert("Conversion successful! (Mock Function)");
-        }
+    // -----------------------------
+    // Data & Action Functions
+    // -----------------------------
+    function loadData() {
+      document.getElementById("realFuddyBalance").textContent = mockData.balances.realFuddy;
+      document.getElementById("inGameFuddyBalance").textContent = mockData.balances.gameFuddy;
+      document.getElementById("crystals").textContent = mockData.balances.crystals;
+      document.getElementById("nfts").textContent = mockData.balances.nfts;
+      document.getElementById("profilePlayerId").textContent = document.getElementById("playerId").value || "N/A";
+      updateTransactionLog();
+      updateCrystalPoolDisplay();
+      updateIncomingRequestsCommon();
+    }
 
-        async function transferCrystals() {
-            showAlert("Crystal transfer successful! (Mock Function)");
-        }
+    function updateTransactionLog() {
+      var list = document.getElementById("transactionList");
+      list.innerHTML = mockData.transactions.map(function(tx) {
+        return "<li>" + tx.type + " - " + tx.amount + " at " + tx.time + "</li>";
+      }).join("");
+    }
 
-        async function createNFT() {
-            showAlert("NFT created successfully! (Mock Function)");
-        }
+    function updateCrystalPoolDisplay() {
+      if(document.getElementById("poolType1"))
+        document.getElementById("poolType1").textContent = mockData.crystalPool.Type1;
+      if(document.getElementById("poolType2"))
+        document.getElementById("poolType2").textContent = mockData.crystalPool.Type2;
+      if(document.getElementById("poolType3"))
+        document.getElementById("poolType3").textContent = mockData.crystalPool.Type3;
+      if(document.getElementById("poolType4"))
+        document.getElementById("poolType4").textContent = mockData.crystalPool.Type4;
+    }
 
-        async function fetchTransactionHistory() {
-            const transactionList = document.getElementById("transactionList");
-            transactionList.innerHTML = "<li>Mock Transaction Data</li>";
-        }
+    async function depositRealFuddy() {
+      showAlert("Deposit successful! (Mock Function)");
+      var amt = Number(document.getElementById("depositAmount").value);
+      mockData.balances.realFuddy += amt;
+      loadData();
+    }
 
-        async function registerPlayer() {
-            showAlert("Player registered successfully! (Mock Function)");
-        }
+    async function transferRealFuddy() {
+      showAlert("Transfer successful! (Mock Function)");
+      loadData();
+    }
 
-        async function distributeCrystals() {
-            showAlert("Crystals distributed successfully! (Mock Function)");
-        }
-    </script>
+    async function convertInGameFuddy() {
+      showAlert("Conversion successful! (Mock Function)");
+      loadData();
+    }
 
+    async function depositCrystals() {
+      showAlert("Crystal deposit successful! (Mock Function)");
+      var amt = Number(document.getElementById("depositCrystalAmount").value);
+      var type = document.getElementById("depositCrystalType").value;
+      if (mockData.crystalPool[type] >= amt) {
+        mockData.crystalPool[type] -= amt;
+      } else {
+        showAlert("Not enough crystals in pool to deposit!");
+      }
+      loadData();
+    }
+
+    async function transferCrystals() {
+      showAlert("Crystal transfer successful! (Mock Function)");
+      loadData();
+    }
+
+    async function withdrawFuddy() {
+      var amt = Number(document.getElementById("withdrawAmount").value);
+      var dest = document.getElementById("withdrawAddress").value;
+      if (amt <= 0 || !dest) {
+        showAlert("Enter a valid amount and destination address.");
+        return;
+      }
+      showAlert("Withdrawal successful! (Mock Function)");
+    }
+
+    async function createNFT() {
+      var nftName = document.getElementById("nftName").value;
+      var nftDesc = document.getElementById("nftDesc").value;
+      if (!nftName || !nftDesc) {
+        showAlert("Please enter NFT name and description.");
+        return;
+      }
+      // Simulate NFT creation by incrementing NFT count
+      mockData.balances.nfts++;
+      showAlert("NFT created successfully! (Mock Function)");
+      loadData();
+    }
+
+    async function fetchTransactionHistory() {
+      showAlert("Transaction history fetched! (Mock Function)");
+      updateTransactionLog();
+    }
+
+    async function registerPlayer() {
+      showAlert("Player registered successfully! (Mock Function)");
+    }
+
+    async function handleDistributeCrystals() {
+      var type = document.getElementById("adminDistCrystalType").value;
+      var amt = Number(document.getElementById("adminDistributeAmount").value);
+      if (!type || amt <= 0) {
+        showAlert("Select a crystal type and valid amount.");
+        return;
+      }
+      showAlert("Crystals distributed successfully! (Mock Function)");
+    }
+
+    async function handleAdminTransferFuddy() {
+      showAlert("Admin transfer successful! (Mock Function)");
+    }
+
+    async function handleAdminConvertFuddy() {
+      showAlert("Admin conversion successful! (Mock Function)");
+    }
+
+    async function handleAdjustBehavior() {
+      var target = document.getElementById("gmBehaviorPlayerId").value;
+      var amt = document.getElementById("gmAdjustmentAmount").value;
+      if (!target || !amt) {
+        showAlert("Fill all fields for behavior adjustment");
+        return;
+      }
+      showAlert("Player behavior adjusted successfully! (Mock)");
+    }
+
+    async function handleUpdateRate() {
+      var type = document.getElementById("gmRateCrystalType").value;
+      var rate = document.getElementById("gmNewRate").value;
+      if (!type || !rate) {
+        showAlert("Fill all fields for updating conversion rate");
+        return;
+      }
+      showAlert("Conversion rate updated successfully! (Mock)");
+    }
+
+    async function handleViewEconomicHealth() {
+      showAlert("Economic health indicators refreshed! (Mock)");
+      mockData.economic.totalRealFuddy = 5000000;
+      mockData.economic.totalInGameFuddy = 8000000;
+      mockData.economic.systemReserve = 100000;
+      mockData.economic.avgBehaviorScore = 75;
+      loadData();
+    }
+
+    async function handleSystemControl() {
+      showAlert("System pause/resume toggled! (Mock)");
+    }
+
+    async function handleViewGlobalStats() {
+      showAlert("Global transaction stats refreshed! (Mock)");
+      mockData.globalStats.totalTransactions = 1200;
+      mockData.globalStats.totalResourcesExchanged = 750000;
+      mockData.globalStats.mostFrequentType = "Deposit";
+      loadData();
+    }
+
+    async function handleWithdrawFuddy() {
+      var amt = Number(document.getElementById("withdrawAmount").value);
+      var dest = document.getElementById("withdrawAddress").value;
+      if (amt <= 0 || !dest) {
+        showAlert("Enter a valid amount and destination address");
+        return;
+      }
+      showAlert("Withdrawal successful! (Mock Function)");
+    }
+
+    async function handleAdminWithdrawFuddy() {
+      var amt = Number(document.getElementById("gmAdminWithdrawAmount").value);
+      var dest = document.getElementById("gmAdminWithdrawAddress").value;
+      if (amt <= 0 || !dest) {
+        showAlert("Enter a valid amount and destination address");
+        return;
+      }
+      showAlert("Admin withdrawal successful! (Mock Function)");
+    }
+
+    async function handleGenerateCrystals() {
+      var add1 = Math.floor(Math.random() * 1000) + 100;
+      var add2 = Math.floor(Math.random() * 500) + 50;
+      var add3 = Math.floor(Math.random() * 250) + 25;
+      var add4 = Math.floor(Math.random() * 100) + 10;
+      var maxPool = { Type1: 10000, Type2: 5000, Type3: 2500, Type4: 1000 };
+      if (mockData.crystalPool.Type1 + add1 > maxPool.Type1 ||
+          mockData.crystalPool.Type2 + add2 > maxPool.Type2 ||
+          mockData.crystalPool.Type3 + add3 > maxPool.Type3 ||
+          mockData.crystalPool.Type4 + add4 > maxPool.Type4) {
+        showAlert("Cannot add crystals: Pool exceeds maximum limits.");
+        return;
+      }
+      mockData.crystalPool.Type1 += add1;
+      mockData.crystalPool.Type2 += add2;
+      mockData.crystalPool.Type3 += add3;
+      mockData.crystalPool.Type4 += add4;
+      showAlert("Crystals generated successfully!");
+      updateCrystalPoolDisplay();
+    }
+
+    async function handleBuyFuddy() {
+      var amt = Number(document.getElementById("buyAmount").value);
+      if (amt <= 0) {
+        showAlert("Enter a valid buy amount.");
+        return;
+      }
+      // Simulate buying by increasing the realFuddy balance.
+      mockData.balances.realFuddy += amt;
+      showAlert("Buy successful! (Mock Function)");
+      loadData();
+    }
+
+    // -----------------------------
+    // Utility Functions
+    // -----------------------------
+    function updateSellerDisplay() {
+      var sellerId = document.getElementById("playerId").value;
+      if (document.getElementById("sellerIdDisplay"))
+        document.getElementById("sellerIdDisplay").textContent = sellerId;
+    }
+  </script>
 </body>
-</html>
+          </html>
