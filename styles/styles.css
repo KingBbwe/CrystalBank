@@ -1,1 +1,175 @@
+:root {
+  --neon-blue: #00f3ff;
+  --matrix-green: #00ff9d;
+  --cyber-purple: #a600ff;
+  --hud-red: #ff0033;
+  --deep-void: #0a0a12;
+  --interface-glow: 0 0 15px;
+  /* Category colors */
+  --cat-bank: #00f3ff;     /* Neon Blue for bank functions */
+  --cat-escrow: #00ff9d;   /* Teal-green for escrow functions */
+  --cat-admin: #32CD32;    /* Lime Green for admin functions */
+  --cat-nft: #FFA500;      /* Orange for NFT functions */
+}
 
+body {
+  background: var(--deep-void);
+  color: var(--neon-blue);
+  font-family: 'OCR A Std', monospace;
+  margin: 0;
+  padding: 10px;
+  min-height: 100vh;
+}
+
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: #001219;
+  padding: 10px;
+  border-bottom: 2px solid var(--neon-blue);
+  z-index: 1001;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.5em;
+}
+
+header img.logo {
+  height: 40px;
+  margin: 0 10px;
+}
+
+header button {
+  background: var(--neon-blue);
+  border: none;
+  padding: 8px 12px;
+  color: black;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.container {
+  padding-top: 70px;
+  max-width: 800px;
+  margin: 0 auto;
+  padding-bottom: 70px;
+}
+
+.cyber-panel {
+  border: 2px solid var(--neon-blue);
+  background: #001219dd;
+  padding: 15px;
+  margin-bottom: 15px;
+  box-shadow: var(--interface-glow) var(--neon-blue);
+}
+
+.wallet-hud {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  padding: 10px;
+  background: #001a1a;
+}
+
+.hud-item {
+  padding: 10px;
+  border: 1px solid var(--matrix-green);
+}
+
+.hud-value {
+  font-size: 1.2em;
+  text-shadow: 0 0 10px var(--matrix-green);
+}
+
+.cyber-button {
+  background: none;
+  border: 2px solid var(--neon-blue);
+  color: var(--neon-blue);
+  padding: 12px;
+  width: 100%;
+  cursor: pointer;
+  font-size: 0.9em;
+  margin: 5px 0;
+  box-sizing: border-box;
+}
+
+.cyber-button:hover {
+  background: rgba(0, 243, 255, 0.1);
+}
+
+/* Category-based button styles */
+.cat-bank { border-color: var(--cat-bank); color: var(--cat-bank); }
+.cat-escrow { border-color: var(--cat-escrow); color: var(--cat-escrow); }
+.cat-admin { border-color: var(--cat-admin); color: var(--cat-admin); }
+.cat-nft { border-color: var(--cat-nft); color: var(--cat-nft); }
+
+.cyber-input, .cyber-select {
+  background: #001219;
+  border: 2px solid var(--neon-blue);
+  color: var(--neon-blue);
+  padding: 12px;
+  margin: 5px 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.alert {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 15px;
+  background: rgba(255, 0, 51, 0.2);
+  color: var(--hud-red);
+  border: 1px solid var(--hud-red);
+  z-index: 1002;
+  display: none;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.menu {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  margin-bottom: 15px;
+}
+
+.menu button {
+  flex: 1 0 30%;
+  margin: 5px;
+}
+
+.mobile-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #001219;
+  padding: 10px;
+  display: flex;
+  justify-content: space-around;
+  border-top: 2px solid var(--neon-blue);
+  z-index: 1000;
+}
+
+/* Common Payment Request View */
+#commonContent {
+  display: none;
+}
+
+#backButton {
+  margin-bottom: 10px;
+}
