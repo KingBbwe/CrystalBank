@@ -1,6 +1,4 @@
-Here's the complete script.js file extracted from the HTML content:
-
-```javascript
+javascript
 // Global Variables & Mock Data
 var currentUser = null;
 var paymentRequests = [];
@@ -415,15 +413,5 @@ function updateSellerDisplay() {
   if (document.getElementById("sellerIdDisplay"))
     document.getElementById("sellerIdDisplay").textContent = sellerId;
 }
-```
 
-This file contains all the JavaScript functionality from the original HTML file, including:
-- Mock data structures
-- Payment request handling
-- User authentication flows
-- Transaction processing
-- UI navigation and display functions
-- Economic system management
-- Crystal generation/distribution logic
 
-The code maintains all the original functionality with mock implementations for banking operations. To use this, save it as `script.js` and link it to your HTML file with a script tag.
